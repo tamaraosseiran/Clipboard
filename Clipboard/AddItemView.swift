@@ -48,175 +48,16 @@ struct AddItemView: View {
     
     var body: some View {
         NavigationView {
-            List {
-                // Basic Information
-                Section {
-                    TextField("Title", text: $title)
-                    
-                    TextField("Description (optional)", text: $description, axis: .vertical)
-                        .lineLimit(3...6)
-                    
-                    TextField("URL (optional)", text: $url)
-                        .keyboardType(.URL)
-                        .autocapitalization(.none)
-                        .onChange(of: url) { _, newValue in
-                            if !newValue.isEmpty {
-                                parsedURL = URLParser.parseURL(newValue)
-                                if let parsed = parsedURL {
-                                    title = parsed.title
-                                    description = parsed.description
-                                    selectedContentType = parsed.contentType
-                                    tags = parsed.tags.joined(separator: ", ")
-                                }
-                                
-                                // Automatically detect location
-                                Task {
-                                    await detectLocationFromURL(newValue)
-                                }
-                            }
-                        }
-                    
-                    Picker("Type", selection: $selectedContentType) {
-                        ForEach(ContentType.allCases, id: \.self) { type in
-                            HStack {
-                                Image(systemName: type.icon)
-                                Text(type.rawValue)
-                            }
-                            .tag(type)
-                        }
-                    }
-                } header: {
-                    Text("Basic Information")
+            ScrollView {
+                LazyVStack(spacing: 20) {
+                    basicInformationSection
+                    categorySection
+                    locationSection
+                    statusSection
+                    additionalInformationSection
                 }
-                
-                // Category
-                Section {
-                    Picker("Category", selection: $selectedCategory) {
-                        Text("None").tag(nil as Category?)
-                        ForEach(categories) { category in
-                            HStack {
-                                Image(systemName: category.icon)
-                                    .foregroundColor(Color(category.color))
-                                Text(category.name)
-                            }
-                            .tag(category as Category?)
-                        }
-                    }
-                } header: {
-                    Text("Category")
-                }
-                
-                // Location
-                Section {
-                    Toggle("Has Location", isOn: $hasLocation)
-                    
-                    if hasLocation {
-                        // Show detected location if available
-                        if let detectedLocation = detectedLocation {
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Image(systemName: "mappin.circle.fill")
-                                        .foregroundColor(.red)
-                                    Text("Detected Location")
-                                        .font(.headline)
-                                }
-                                
-                                Text(detectedLocation.name)
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                
-                                if let address = detectedLocation.address {
-                                    Text(address)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                                
-                                HStack {
-                                    Button("Use This Location") {
-                                        useDetectedLocation(detectedLocation)
-                                    }
-                                    .buttonStyle(.borderedProminent)
-                                    
-                                    Button("Reject") {
-                                        self.detectedLocation = nil
-                                    }
-                                    .buttonStyle(.bordered)
-                                }
-                            }
-                            .padding(.vertical, 8)
-                        }
-                        
-                        // Manual location entry
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Manual Entry")
-                                .font(.headline)
-                            
-                            TextField("Address", text: $address)
-                            TextField("City", text: $city)
-                            TextField("State/Province", text: $state)
-                            TextField("Country", text: $country)
-                            
-                            HStack {
-                                TextField("Latitude", text: $latitude)
-                                    .keyboardType(.decimalPad)
-                                TextField("Longitude", text: $longitude)
-                                    .keyboardType(.decimalPad)
-                            }
-                            
-                            Button("Get Current Location") {
-                                getCurrentLocation()
-                            }
-                            .foregroundColor(.blue)
-                        }
-                    }
-                    
-                    // Location detection status
-                    if isDetectingLocation {
-                        HStack {
-                            ProgressView()
-                                .scaleEffect(0.8)
-                            Text("Detecting location...")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                } header: {
-                    Text("Location")
-                }
-                
-                // Status
-                Section {
-                    Toggle("Visited", isOn: $isVisited)
-                    Toggle("Favorite", isOn: $isFavorite)
-                    
-                    if isVisited {
-                        HStack {
-                            Text("Rating")
-                            Spacer()
-                            ForEach(1...5, id: \.self) { star in
-                                Button(action: { rating = star }) {
-                                    Image(systemName: star <= rating ? "star.fill" : "star")
-                                        .foregroundColor(star <= rating ? .yellow : .gray)
-                                }
-                            }
-                        }
-                    }
-                } header: {
-                    Text("Status")
-                }
-                
-                // Additional Information
-                Section {
-                    TextField("Notes", text: $notes, axis: .vertical)
-                        .lineLimit(3...6)
-                    
-                    TextField("Tags (comma separated)", text: $tags)
-                        .autocapitalization(.none)
-                } header: {
-                    Text("Additional Information")
-                }
+                .padding(.vertical)
             }
-            .listStyle(InsetGroupedListStyle())
             .navigationTitle("Add Item")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -323,6 +164,216 @@ struct AddItemView: View {
         
         // Clear the detected location since user approved it
         detectedLocation = nil
+    }
+    
+    // MARK: - View Components
+    
+    private var basicInformationSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Basic Information")
+                .font(.headline)
+                .padding(.horizontal)
+            
+            VStack(spacing: 12) {
+                TextField("Title", text: $title)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                
+                TextField("Description (optional)", text: $description, axis: .vertical)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .lineLimit(3...6)
+                
+                TextField("URL (optional)", text: $url)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .keyboardType(.URL)
+                    .autocapitalization(.none)
+                    .onChange(of: url) { _, newValue in
+                        if !newValue.isEmpty {
+                            parsedURL = URLParser.parseURL(newValue)
+                            if let parsed = parsedURL {
+                                title = parsed.title
+                                description = parsed.description
+                                selectedContentType = parsed.contentType
+                                tags = parsed.tags.joined(separator: ", ")
+                            }
+                            
+                            // Automatically detect location
+                            Task {
+                                await detectLocationFromURL(newValue)
+                            }
+                        }
+                    }
+                
+                Picker("Type", selection: $selectedContentType) {
+                    ForEach(ContentType.allCases, id: \.self) { type in
+                        HStack {
+                            Image(systemName: type.icon)
+                            Text(type.rawValue)
+                        }
+                        .tag(type)
+                    }
+                }
+                .pickerStyle(MenuPickerStyle())
+            }
+            .padding(.horizontal)
+        }
+    }
+    
+    private var categorySection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Category")
+                .font(.headline)
+                .padding(.horizontal)
+            
+            Picker("Category", selection: $selectedCategory) {
+                Text("None").tag(nil as Category?)
+                ForEach(categories) { category in
+                    HStack {
+                        Image(systemName: category.icon)
+                            .foregroundColor(Color(category.color))
+                        Text(category.name)
+                    }
+                    .tag(category as Category?)
+                }
+            }
+            .pickerStyle(MenuPickerStyle())
+            .padding(.horizontal)
+        }
+    }
+    
+    private var locationSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Location")
+                .font(.headline)
+                .padding(.horizontal)
+            
+            VStack(spacing: 12) {
+                Toggle("Has Location", isOn: $hasLocation)
+                
+                if hasLocation {
+                    // Show detected location if available
+                    if let detectedLocation = detectedLocation {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Image(systemName: "mappin.circle.fill")
+                                    .foregroundColor(.red)
+                                Text("Detected Location")
+                                    .font(.headline)
+                            }
+                            
+                            Text(detectedLocation.displayAddress)
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                            
+                            if let address = detectedLocation.address {
+                                Text(address)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            HStack {
+                                Button("Use This Location") {
+                                    useDetectedLocation(detectedLocation)
+                                }
+                                .buttonStyle(.borderedProminent)
+                                
+                                Button("Reject") {
+                                    self.detectedLocation = nil
+                                }
+                                .buttonStyle(.bordered)
+                            }
+                        }
+                        .padding(.vertical, 8)
+                    }
+                    
+                    // Manual location entry
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Manual Entry")
+                            .font(.headline)
+                        
+                        TextField("Address", text: $address)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                        TextField("City", text: $city)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                        TextField("State/Province", text: $state)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                        TextField("Country", text: $country)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                        
+                        HStack {
+                            TextField("Latitude", text: $latitude)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .keyboardType(.decimalPad)
+                            TextField("Longitude", text: $longitude)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .keyboardType(.decimalPad)
+                        }
+                        
+                        Button("Get Current Location") {
+                            getCurrentLocation()
+                        }
+                        .foregroundColor(.blue)
+                    }
+                }
+                
+                // Location detection status
+                if isDetectingLocation {
+                    HStack {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                        Text("Detecting location...")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            .padding(.horizontal)
+        }
+    }
+    
+    private var statusSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Status")
+                .font(.headline)
+                .padding(.horizontal)
+            
+            VStack(spacing: 12) {
+                Toggle("Visited", isOn: $isVisited)
+                Toggle("Favorite", isOn: $isFavorite)
+                
+                if isVisited {
+                    HStack {
+                        Text("Rating")
+                        Spacer()
+                        ForEach(1...5, id: \.self) { star in
+                            Button(action: { rating = star }) {
+                                Image(systemName: star <= rating ? "star.fill" : "star")
+                                    .foregroundColor(star <= rating ? .yellow : .gray)
+                            }
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal)
+        }
+    }
+    
+    private var additionalInformationSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Additional Information")
+                .font(.headline)
+                .padding(.horizontal)
+            
+            VStack(spacing: 12) {
+                TextField("Notes", text: $notes, axis: .vertical)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .lineLimit(3...6)
+                
+                TextField("Tags (comma separated)", text: $tags)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .autocapitalization(.none)
+            }
+            .padding(.horizontal)
+        }
     }
 }
 
