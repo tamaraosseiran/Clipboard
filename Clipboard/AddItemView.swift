@@ -90,27 +90,48 @@ struct AddItemView: View {
                 
                 Section {
                     Button(action: addCheckIn) {
-                        HStack {
+                        HStack(spacing: 8) {
                             Image(systemName: "plus.circle.fill")
-                                .foregroundColor(.blue)
+                                .font(.title3)
                             Text("Check In")
-                                .foregroundColor(.blue)
+                                .font(.body)
+                                .fontWeight(.medium)
                         }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.blue)
+                        .cornerRadius(10)
                     }
+                    .buttonStyle(.plain)
                     
                     if !visitDates.isEmpty {
                         ForEach(visitDates.indices, id: \.self) { index in
-                            HStack {
+                            HStack(spacing: 12) {
                                 Image(systemName: "checkmark.circle.fill")
                                     .foregroundColor(.green)
-                                Text(visitDates[index], style: .date)
-                                Spacer()
-                                Button("Remove") {
-                                    visitDates.remove(at: index)
+                                    .font(.title3)
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(visitDates[index], style: .date)
+                                        .font(.body)
+                                    Text(visitDates[index], style: .time)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
                                 }
-                                .foregroundColor(.red)
-                                .font(.caption)
+                                
+                                Spacer()
+                                
+                                Button(action: {
+                                    visitDates.remove(at: index)
+                                }) {
+                                    Image(systemName: "trash.circle.fill")
+                                        .foregroundColor(.red)
+                                        .font(.title3)
+                                }
+                                .buttonStyle(.plain)
                             }
+                            .padding(.vertical, 4)
                         }
                     }
                     
