@@ -17,6 +17,7 @@ struct AddItemView: View {
     
     @State private var name = ""
     @State private var location = ""
+    @State private var selectedContentType: ContentType = .other
     @State private var isVisited = false
     @State private var visitDate = Date()
     @State private var rating = 0
@@ -41,8 +42,28 @@ struct AddItemView: View {
                 }
                 
                 Section {
-                    TextField("Location", text: $location)
+                    Picker("Category", selection: $selectedContentType) {
+                        ForEach(ContentType.allCases, id: \.self) { type in
+                            HStack {
+                                Image(systemName: type.icon)
+                                    .foregroundColor(Color(type.color))
+                                Text(type.rawValue)
+                            }
+                            .tag(type)
+                        }
+                    }
+                    .pickerStyle(MenuPickerStyle())
+                } header: {
+                    Text("Category")
+                }
+                
+                Section {
+                    TextField("Address", text: $location)
                         .textFieldStyle(.plain)
+                        .placeholder(when: location.isEmpty) {
+                            Text("Enter full address for map pinning")
+                                .foregroundColor(.secondary)
+                        }
                     
                     if let detectedLocation = detectedLocation {
                         VStack(alignment: .leading, spacing: 8) {
@@ -57,7 +78,7 @@ struct AddItemView: View {
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                             
-                            Button("Use This Location") {
+                            Button("Use This Address") {
                                 location = detectedLocation.displayAddress
                                 self.detectedLocation = nil
                             }
@@ -67,6 +88,8 @@ struct AddItemView: View {
                     }
                 } header: {
                     Text("Location")
+                } footer: {
+                    Text("Enter a full address so it can be pinned on the map")
                 }
                 
                 Section {
@@ -117,9 +140,10 @@ struct AddItemView: View {
         }
         .onAppear {
             if let prefilledURL = prefilledURL, !prefilledURL.isEmpty {
-                // Parse URL and auto-fill name
+                // Parse URL and auto-fill name and category
                 if let parsed = URLParser.parseURL(prefilledURL) {
                     name = parsed.title
+                    selectedContentType = parsed.contentType
                     location = parsed.detectedLocation?.displayAddress ?? ""
                 }
                 
@@ -136,7 +160,7 @@ struct AddItemView: View {
             title: name,
             description: nil,
             url: prefilledURL,
-            contentType: .other, // Default to other since we removed category selection
+            contentType: selectedContentType,
             location: location.isEmpty ? nil : createLocationFromString(location),
             category: nil,
             rating: rating > 0 ? rating : nil,
@@ -172,6 +196,20 @@ struct AddItemView: View {
             await MainActor.run {
                 isDetectingLocation = false
             }
+        }
+    }
+}
+
+// Extension for TextField placeholder
+extension View {
+    func placeholder<Content: View>(
+        when shouldShow: Bool,
+        alignment: Alignment = .leading,
+        @ViewBuilder placeholder: () -> Content) -> some View {
+
+        ZStack(alignment: alignment) {
+            placeholder().opacity(shouldShow ? 1 : 0)
+            self
         }
     }
 }
