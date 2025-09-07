@@ -92,26 +92,15 @@ struct AddItemView: View {
                     Button(action: addCheckIn) {
                         HStack(spacing: 8) {
                             Image(systemName: "plus.circle.fill")
-                                .font(.title3)
+                                .foregroundColor(.blue)
                             Text("Check In")
-                                .font(.body)
-                                .fontWeight(.medium)
+                                .foregroundColor(.blue)
                         }
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color.blue)
-                        .cornerRadius(10)
                     }
-                    .buttonStyle(.plain)
                     
                     if !visitDates.isEmpty {
                         ForEach(visitDates.indices, id: \.self) { index in
                             HStack(spacing: 12) {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(.green)
-                                    .font(.title3)
-                                
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(visitDates[index], style: .date)
                                         .font(.body)
