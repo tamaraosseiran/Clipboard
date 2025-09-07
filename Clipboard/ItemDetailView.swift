@@ -357,7 +357,6 @@ struct EditItemView: View {
                             HStack(spacing: 8) {
                                 Text(type.icon)
                                     .font(.title2)
-                                    .frame(width: 25)
                                 Text(type.rawValue)
                                     .font(.body)
                             }

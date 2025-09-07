@@ -83,7 +83,7 @@ struct URLParser {
         // Extract coordinates from Google Maps URL
         if let latString = queryItems.first(where: { $0.name == "ll" })?.value,
            let coordinates = parseCoordinates(from: latString) {
-            let placeName = queryItems.first(where: { $0.name == "q" })?.value ?? "Location"
+            _ = queryItems.first(where: { $0.name == "q" })?.value ?? "Location"
             let address = queryItems.first(where: { $0.name == "address" })?.value
             
             return Location(
