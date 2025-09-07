@@ -16,7 +16,7 @@ extension String: @retroactive Identifiable {
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var items: [ContentItem]
-    @State private var selectedTab = 0
+    @State private var isMapView = true
     @State private var showingAddItem = false
     @State private var searchText = ""
     @State private var selectedFilter: ContentType? = nil
@@ -41,71 +41,69 @@ struct ContentView: View {
     }
     
     var body: some View {
-        TabView(selection: $selectedTab) {
-            // List View
-            NavigationView {
-                ListView(items: filteredItems, searchText: $searchText, selectedFilter: $selectedFilter)
-                    .navigationTitle("My Clipboard")
-                    .searchable(text: $searchText, prompt: "Search items...")
-                    .toolbar {
-                        ToolbarItem(placement: .navigationBarTrailing) {
-                            Button(action: { showingAddItem = true }) {
-                                Image(systemName: "plus.circle.fill")
-                                    .font(.title2)
-                            }
+        NavigationView {
+            VStack(spacing: 0) {
+                // Toggle Button
+                HStack {
+                    Button(action: { isMapView = false }) {
+                        HStack {
+                            Image(systemName: "list.bullet")
+                            Text("List")
                         }
-                        
-                        ToolbarItem(placement: .navigationBarLeading) {
-                            Menu {
-                                Button("All Items") { selectedFilter = nil }
-                                ForEach(ContentType.allCases, id: \.self) { type in
-                                    Button(type.rawValue) { selectedFilter = type }
-                                }
-                            } label: {
-                                Image(systemName: "line.3.horizontal.decrease.circle")
-                                    .font(.title2)
-                            }
-                        }
+                        .foregroundColor(isMapView ? .secondary : .primary)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(isMapView ? Color.clear : Color.blue.opacity(0.1))
+                        .cornerRadius(20)
                     }
+                    
+                    Spacer()
+                    
+                    Button(action: { isMapView = true }) {
+                        HStack {
+                            Image(systemName: "map")
+                            Text("Map")
+                        }
+                        .foregroundColor(isMapView ? .primary : .secondary)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(isMapView ? Color.blue.opacity(0.1) : Color.clear)
+                        .cornerRadius(20)
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                .background(Color(.systemBackground))
+                
+                // Main Content
+                if isMapView {
+                    MapView(items: filteredItems)
+                } else {
+                    ListView(items: filteredItems, searchText: $searchText, selectedFilter: $selectedFilter)
+                }
             }
-            .tabItem {
-                Image(systemName: "list.bullet")
-                Text("List")
+            .navigationTitle("My Clipboard")
+            .searchable(text: $searchText, prompt: "Search items...")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { showingAddItem = true }) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title2)
+                    }
+                }
+                
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Menu {
+                        Button("All Items") { selectedFilter = nil }
+                        ForEach(ContentType.allCases, id: \.self) { type in
+                            Button(type.rawValue) { selectedFilter = type }
+                        }
+                    } label: {
+                        Image(systemName: "line.3.horizontal.decrease.circle")
+                            .font(.title2)
+                    }
+                }
             }
-            .tag(0)
-            
-            // Map View
-            NavigationView {
-                MapView(items: items)
-                    .navigationTitle("Map")
-            }
-            .tabItem {
-                Image(systemName: "map")
-                Text("Map")
-            }
-            .tag(1)
-            
-            // Categories View
-            NavigationView {
-                CategoriesView()
-                    .navigationTitle("Categories")
-            }
-            .tabItem {
-                Image(systemName: "folder")
-                Text("Categories")
-            }
-            .tag(2)
-            
-            // Stats View
-            NavigationView {
-                StatsView(items: items)
-                    .navigationTitle("Stats")
-            }
-            .tabItem {
-                Image(systemName: "chart.bar")
-                Text("Stats")
-            }
-            .tag(3)
         }
         .sheet(isPresented: $showingAddItem) {
             AddItemView()
@@ -219,18 +217,118 @@ struct MapView: View {
         center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
         span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
     )
+    @State private var selectedItem: ContentItem?
     
     var body: some View {
-        Map(position: .constant(.region(region)), selection: .constant(nil)) {
-            ForEach(itemsWithLocation) { item in
-                Marker(item.title, coordinate: item.location!.coordinate)
-                    .tint(Color(item.contentTypeEnum.color))
+        ZStack {
+            Map(position: .constant(.region(region)), selection: $selectedItem) {
+                ForEach(itemsWithLocation) { item in
+                    Annotation(item.title, coordinate: item.location!.coordinate) {
+                        CategoryPinView(item: item, selectedItem: $selectedItem)
+                    }
+                    .tag(item)
+                }
             }
+            
+            // Category Legend
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    CategoryLegendView()
+                        .padding()
+                        .background(Color(.systemBackground))
+                        .cornerRadius(12)
+                        .shadow(radius: 4)
+                        .padding(.trailing)
+                }
+            }
+        }
+        .sheet(item: $selectedItem) { item in
+            ItemDetailView(item: item)
         }
     }
     
     private var itemsWithLocation: [ContentItem] {
         items.filter { $0.location != nil }
+    }
+}
+
+// MARK: - Category Pin View
+struct CategoryPinView: View {
+    let item: ContentItem
+    @Binding var selectedItem: ContentItem?
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Main pin
+            ZStack {
+                // Pin shadow
+                Circle()
+                    .fill(Color.black.opacity(0.2))
+                    .frame(width: 32, height: 32)
+                    .offset(x: 2, y: 2)
+                
+                // Pin background
+                Circle()
+                    .fill(Color(item.contentTypeEnum.color))
+                    .frame(width: 30, height: 30)
+                
+                // Icon
+                Image(systemName: item.contentTypeEnum.icon)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white)
+            }
+            
+            // Pin tail
+            Triangle()
+                .fill(Color(item.contentTypeEnum.color))
+                .frame(width: 12, height: 8)
+                .offset(y: -2)
+        }
+        .scaleEffect(selectedItem?.id == item.id ? 1.2 : 1.0)
+        .animation(.spring(response: 0.3), value: selectedItem?.id)
+    }
+}
+
+// MARK: - Triangle Shape for Pin Tail
+struct Triangle: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.midX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+        path.closeSubpath()
+        return path
+    }
+}
+
+// MARK: - Category Legend View
+struct CategoryLegendView: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Categories")
+                .font(.headline)
+                .foregroundColor(.primary)
+            
+            ForEach(ContentType.allCases, id: \.self) { type in
+                HStack(spacing: 8) {
+                    ZStack {
+                        Circle()
+                            .fill(Color(type.color))
+                            .frame(width: 16, height: 16)
+                        
+                        Image(systemName: type.icon)
+                            .font(.system(size: 8, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                    
+                    Text(type.rawValue)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
     }
 }
 
