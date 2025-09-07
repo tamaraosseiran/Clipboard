@@ -354,12 +354,12 @@ struct EditItemView: View {
                     
                     Picker("Type", selection: $selectedContentType) {
                         ForEach(ContentType.allCases, id: \.self) { type in
-                            HStack {
+                            HStack(spacing: 8) {
                                 Text(type.icon)
                                     .font(.title2)
-                                    .frame(width: 30, alignment: .leading)
+                                    .frame(width: 25)
                                 Text(type.rawValue)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .font(.body)
                             }
                             .tag(type)
                         }
