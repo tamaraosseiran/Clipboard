@@ -18,8 +18,7 @@ struct AddItemView: View {
     @State private var name = ""
     @State private var location = ""
     @State private var selectedContentType: ContentType = .other
-    @State private var isVisited = false
-    @State private var visitDate = Date()
+    @State private var visitDates: [Date] = []
     @State private var rating = 0
     @State private var note = ""
     
@@ -58,12 +57,8 @@ struct AddItemView: View {
                 }
                 
                 Section {
-                    TextField("Address", text: $location)
+                    TextField("Enter full address for map pinning", text: $location)
                         .textFieldStyle(.plain)
-                        .placeholder(when: location.isEmpty) {
-                            Text("Enter full address for map pinning")
-                                .foregroundColor(.secondary)
-                        }
                     
                     if let detectedLocation = detectedLocation {
                         VStack(alignment: .leading, spacing: 8) {
@@ -93,13 +88,34 @@ struct AddItemView: View {
                 }
                 
                 Section {
-                    Toggle("Visited", isOn: $isVisited)
-                    
-                    if isVisited {
-                        DatePicker("Visit Date", selection: $visitDate, displayedComponents: .date)
-                        
+                    Button(action: addCheckIn) {
                         HStack {
-                            Text("Rating")
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundColor(.blue)
+                            Text("Check In")
+                                .foregroundColor(.blue)
+                        }
+                    }
+                    
+                    if !visitDates.isEmpty {
+                        ForEach(visitDates.indices, id: \.self) { index in
+                            HStack {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(.green)
+                                Text(visitDates[index], style: .date)
+                                Spacer()
+                                Button("Remove") {
+                                    visitDates.remove(at: index)
+                                }
+                                .foregroundColor(.red)
+                                .font(.caption)
+                            }
+                        }
+                    }
+                    
+                    if !visitDates.isEmpty {
+                        HStack {
+                            Text("Overall Rating")
                             Spacer()
                             ForEach(1...5, id: \.self) { star in
                                 Button(action: { rating = star }) {
@@ -111,7 +127,9 @@ struct AddItemView: View {
                         }
                     }
                 } header: {
-                    Text("Visit Status")
+                    Text("Check-ins")
+                } footer: {
+                    Text("Tap 'Check In' to record each visit")
                 }
                 
                 Section {
@@ -155,6 +173,10 @@ struct AddItemView: View {
         }
     }
     
+    private func addCheckIn() {
+        visitDates.append(Date())
+    }
+    
     private func saveItem() {
         let newItem = ContentItem(
             title: name,
@@ -164,7 +186,7 @@ struct AddItemView: View {
             location: location.isEmpty ? nil : createLocationFromString(location),
             category: nil,
             rating: rating > 0 ? rating : nil,
-            isVisited: isVisited,
+            isVisited: !visitDates.isEmpty,
             isFavorite: false,
             notes: note.isEmpty ? nil : note,
             tags: []
@@ -200,19 +222,6 @@ struct AddItemView: View {
     }
 }
 
-// Extension for TextField placeholder
-extension View {
-    func placeholder<Content: View>(
-        when shouldShow: Bool,
-        alignment: Alignment = .leading,
-        @ViewBuilder placeholder: () -> Content) -> some View {
-
-        ZStack(alignment: alignment) {
-            placeholder().opacity(shouldShow ? 1 : 0)
-            self
-        }
-    }
-}
 
 #Preview {
     AddItemView()
