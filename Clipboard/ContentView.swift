@@ -32,57 +32,64 @@ struct ContentView: View {
     }
     
     var body: some View {
-        NavigationView {
-            VStack(spacing: 0) {
-                // Toggle Button
-                HStack {
-                    Button(action: { isMapView = false }) {
-                        HStack {
-                            Image(systemName: "list.bullet")
-                            Text("List")
-                        }
-                        .foregroundColor(isMapView ? .secondary : .primary)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(isMapView ? Color.clear : Color.blue.opacity(0.1))
-                        .cornerRadius(20)
+        ZStack {
+            // Full screen content
+            if isMapView {
+                MapView(items: filteredItems)
+            } else {
+                ListView(items: filteredItems, selectedFilter: $selectedFilter)
+            }
+            
+            // Floating bottom menu
+            VStack {
+                Spacer()
+                
+                HStack(spacing: 0) {
+                    // Add button
+                    Button(action: { showingAddItem = true }) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title)
+                            .foregroundColor(.white)
+                            .frame(width: 50, height: 50)
+                            .background(Color.blue)
+                            .clipShape(Circle())
+                            .shadow(radius: 4)
                     }
                     
                     Spacer()
                     
-                    Button(action: { isMapView = true }) {
-                        HStack {
-                            Image(systemName: "map")
-                            Text("Map")
+                    // View toggle buttons
+                    HStack(spacing: 8) {
+                        Button(action: { isMapView = true }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "map")
+                                Text("Map")
+                            }
+                            .foregroundColor(isMapView ? .white : .primary)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .background(isMapView ? Color.blue : Color(.systemBackground))
+                            .cornerRadius(20)
+                            .shadow(radius: 2)
                         }
-                        .foregroundColor(isMapView ? .primary : .secondary)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(isMapView ? Color.blue.opacity(0.1) : Color.clear)
-                        .cornerRadius(20)
+                        
+                        Button(action: { isMapView = false }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "list.bullet")
+                                Text("List")
+                            }
+                            .foregroundColor(isMapView ? .primary : .white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .background(isMapView ? Color(.systemBackground) : Color.blue)
+                            .cornerRadius(20)
+                            .shadow(radius: 2)
+                        }
                     }
-                }
-                .padding(.horizontal)
-                .padding(.vertical, 8)
-                .background(Color(.systemBackground))
-                
-                // Main Content
-                if isMapView {
-                    MapView(items: filteredItems)
-                } else {
-                    ListView(items: filteredItems, selectedFilter: $selectedFilter)
-                }
-            }
-            .navigationTitle("My Clipboard")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { showingAddItem = true }) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title2)
-                    }
-                }
-                
-                ToolbarItem(placement: .navigationBarLeading) {
+                    
+                    Spacer()
+                    
+                    // Filter button
                     Menu {
                         Button("All Items") { selectedFilter = nil }
                         ForEach(ContentType.allCases, id: \.self) { type in
@@ -90,11 +97,19 @@ struct ContentView: View {
                         }
                     } label: {
                         Image(systemName: "line.3.horizontal.decrease.circle")
-                            .font(.title2)
+                            .font(.title)
+                            .foregroundColor(.white)
+                            .frame(width: 50, height: 50)
+                            .background(Color.gray)
+                            .clipShape(Circle())
+                            .shadow(radius: 4)
                     }
                 }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 40)
             }
         }
+        .ignoresSafeArea()
         .sheet(isPresented: $showingAddItem) {
             AddItemView()
         }
