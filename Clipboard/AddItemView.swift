@@ -46,7 +46,9 @@ struct AddItemView: View {
                             HStack {
                                 Text(type.icon)
                                     .font(.title2)
+                                    .frame(width: 30, alignment: .leading)
                                 Text(type.rawValue)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
                             }
                             .tag(type)
                         }
