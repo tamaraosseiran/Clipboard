@@ -18,20 +18,11 @@ struct ContentView: View {
     @Query private var items: [ContentItem]
     @State private var isMapView = true
     @State private var showingAddItem = false
-    @State private var searchText = ""
     @State private var selectedFilter: ContentType? = nil
     @State private var sharedURL: String?
     
     var filteredItems: [ContentItem] {
         var filtered = items
-        
-        if !searchText.isEmpty {
-            filtered = filtered.filter { item in
-                item.title.localizedCaseInsensitiveContains(searchText) ||
-                (item.itemDescription?.localizedCaseInsensitiveContains(searchText) ?? false) ||
-                item.tags.contains { $0.localizedCaseInsensitiveContains(searchText) }
-            }
-        }
         
         if let filter = selectedFilter {
             filtered = filtered.filter { $0.contentTypeEnum == filter }
@@ -79,11 +70,10 @@ struct ContentView: View {
                 if isMapView {
                     MapView(items: filteredItems)
                 } else {
-                    ListView(items: filteredItems, searchText: $searchText, selectedFilter: $selectedFilter)
+                    ListView(items: filteredItems, selectedFilter: $selectedFilter)
                 }
             }
             .navigationTitle("My Clipboard")
-            .searchable(text: $searchText, prompt: "Search items...")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showingAddItem = true }) {
@@ -122,7 +112,6 @@ struct ContentView: View {
 // MARK: - List View
 struct ListView: View {
     let items: [ContentItem]
-    @Binding var searchText: String
     @Binding var selectedFilter: ContentType?
     @Environment(\.modelContext) private var modelContext
     
@@ -220,28 +209,12 @@ struct MapView: View {
     @State private var selectedItem: ContentItem?
     
     var body: some View {
-        ZStack {
-            Map(position: .constant(.region(region)), selection: $selectedItem) {
-                ForEach(itemsWithLocation) { item in
-                    Annotation(item.title, coordinate: item.location!.coordinate) {
-                        CategoryPinView(item: item, selectedItem: $selectedItem)
-                    }
-                    .tag(item)
+        Map(position: .constant(.region(region)), selection: $selectedItem) {
+            ForEach(itemsWithLocation) { item in
+                Annotation(item.title, coordinate: item.location!.coordinate) {
+                    CategoryPinView(item: item, selectedItem: $selectedItem)
                 }
-            }
-            
-            // Category Legend
-            VStack {
-                Spacer()
-                HStack {
-                    Spacer()
-                    CategoryLegendView()
-                        .padding()
-                        .background(Color(.systemBackground))
-                        .cornerRadius(12)
-                        .shadow(radius: 4)
-                        .padding(.trailing)
-                }
+                .tag(item)
             }
         }
         .sheet(item: $selectedItem) { item in
@@ -303,34 +276,6 @@ struct Triangle: Shape {
     }
 }
 
-// MARK: - Category Legend View
-struct CategoryLegendView: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Categories")
-                .font(.headline)
-                .foregroundColor(.primary)
-            
-            ForEach(ContentType.allCases, id: \.self) { type in
-                HStack(spacing: 8) {
-                    ZStack {
-                        Circle()
-                            .fill(Color(type.color))
-                            .frame(width: 16, height: 16)
-                        
-                        Image(systemName: type.icon)
-                            .font(.system(size: 8, weight: .semibold))
-                            .foregroundColor(.white)
-                    }
-                    
-                    Text(type.rawValue)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
-        }
-    }
-}
 
 // MARK: - Categories View
 struct CategoriesView: View {
