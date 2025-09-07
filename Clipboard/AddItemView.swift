@@ -44,8 +44,8 @@ struct AddItemView: View {
                     Picker("Category", selection: $selectedContentType) {
                         ForEach(ContentType.allCases, id: \.self) { type in
                             HStack {
-                                Image(systemName: type.icon)
-                                    .foregroundColor(Color(type.color))
+                                Text(type.icon)
+                                    .font(.title2)
                                 Text(type.rawValue)
                             }
                             .tag(type)

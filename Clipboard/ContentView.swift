@@ -144,9 +144,8 @@ struct ItemRowView: View {
     var body: some View {
         HStack(spacing: 12) {
             // Icon
-            Image(systemName: item.contentTypeEnum.icon)
+            Text(item.contentTypeEnum.icon)
                 .font(.title2)
-                .foregroundColor(Color(item.contentTypeEnum.color))
                 .frame(width: 40, height: 40)
                 .background(Color(item.contentTypeEnum.color).opacity(0.1))
                 .clipShape(Circle())
@@ -248,9 +247,8 @@ struct CategoryPinView: View {
                     .frame(width: 30, height: 30)
                 
                 // Icon
-                Image(systemName: item.contentTypeEnum.icon)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white)
+                Text(item.contentTypeEnum.icon)
+                    .font(.system(size: 16, weight: .semibold))
             }
             
             // Pin tail
@@ -351,8 +349,8 @@ struct StatsView: View {
                 ForEach(ContentType.allCases, id: \.self) { type in
                     let count = items.filter { $0.contentTypeEnum == type }.count
                     HStack {
-                        Image(systemName: type.icon)
-                            .foregroundColor(Color(type.color))
+                        Text(type.icon)
+                            .font(.title3)
                             .frame(width: 20)
                         
                         Text(type.rawValue)

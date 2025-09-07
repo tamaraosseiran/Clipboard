@@ -21,9 +21,8 @@ struct ItemDetailView: View {
                 // Header
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
-                        Image(systemName: item.contentTypeEnum.icon)
+                        Text(item.contentTypeEnum.icon)
                             .font(.largeTitle)
-                            .foregroundColor(Color(item.contentTypeEnum.color))
                             .frame(width: 60, height: 60)
                             .background(Color(item.contentTypeEnum.color).opacity(0.1))
                             .clipShape(Circle())
@@ -356,7 +355,8 @@ struct EditItemView: View {
                     Picker("Type", selection: $selectedContentType) {
                         ForEach(ContentType.allCases, id: \.self) { type in
                             HStack {
-                                Image(systemName: type.icon)
+                                Text(type.icon)
+                                    .font(.title2)
                                 Text(type.rawValue)
                             }
                             .tag(type)

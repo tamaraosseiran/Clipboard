@@ -20,12 +20,12 @@ enum ContentType: String, CaseIterable, Codable {
     
     var icon: String {
         switch self {
-        case .place: return "mappin.circle.fill"
-        case .recipe: return "fork.knife.circle.fill"
-        case .restaurant: return "building.2.crop.circle.fill"
-        case .activity: return "figure.hiking.circle.fill"
-        case .shop: return "bag.circle.fill"
-        case .other: return "star.circle.fill"
+        case .place: return "📍"
+        case .recipe: return "🍳"
+        case .restaurant: return "🍽️"
+        case .activity: return "🎯"
+        case .shop: return "🛍️"
+        case .other: return "⭐"
         }
     }
     
