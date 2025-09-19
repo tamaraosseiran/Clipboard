@@ -60,12 +60,12 @@ struct ContentView: View {
                             }
                         }
                     } label: {
-                        HStack(spacing: 8) {
+                        HStack(spacing: 4) {
                             Text(isMapView ? "Map" : "Collections")
-                                .font(.title2)
-                                .fontWeight(.semibold)
+                                .font(.largeTitle)
+                                .fontWeight(.bold)
                             Image(systemName: "chevron.down")
-                                .font(.caption)
+                                .font(.title3)
                                 .foregroundColor(.secondary)
                         }
                         .foregroundColor(.primary)
@@ -81,19 +81,20 @@ struct ContentView: View {
                         }
                     } label: {
                         Image(systemName: "line.3.horizontal.decrease.circle")
-                            .font(.title2)
+                            .font(.title)
                             .foregroundColor(.blue)
                     }
                     
                     // Add button
                     Button(action: { showingAddItem = true }) {
                         Image(systemName: "plus.circle.fill")
-                            .font(.title2)
+                            .font(.title)
                             .foregroundColor(.blue)
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                .padding(.bottom, 4)
                 .background(Color(.systemBackground))
                 
                 Divider()
