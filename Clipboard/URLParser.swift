@@ -65,6 +65,11 @@ struct URLParser {
             return await detectGoogleMapsLocation(url: url, queryItems: queryItems)
         }
         
+        // TikTok location detection
+        if host.contains("tiktok.com") || host.contains("vm.tiktok.com") {
+            return await detectTikTokLocation(url: url)
+        }
+        
         // Yelp location detection
         if host.contains("yelp.com") {
             return await detectYelpLocation(url: url)
@@ -96,6 +101,52 @@ struct URLParser {
         // Try to geocode the place name
         if let placeName = queryItems.first(where: { $0.name == "q" })?.value {
             return await geocodeAddress(placeName)
+        }
+        
+        return nil
+    }
+    
+    private static func detectTikTokLocation(url: URL) async -> Location? {
+        // TikTok URLs often contain location information in the video content
+        // Since we can't access the actual video content directly, we'll try to extract
+        // location hints from the URL structure and query parameters
+        
+        let queryItems = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+        let path = url.path.lowercased()
+        
+        // Check for location-related query parameters
+        for item in queryItems {
+            if let value = item.value?.lowercased() {
+                // Look for location-related parameters
+                if item.name == "location" || item.name == "place" || item.name == "venue" {
+                    return await geocodeAddress(value)
+                }
+                
+                // Check if the value contains location-like patterns
+                if value.contains("restaurant") || value.contains("cafe") || value.contains("bar") ||
+                   value.contains("hotel") || value.contains("shop") || value.contains("store") {
+                    return await geocodeAddress(value)
+                }
+            }
+        }
+        
+        // Try to extract location from path components
+        let components = path.components(separatedBy: "/").filter { !$0.isEmpty }
+        for component in components {
+            // Skip common TikTok path components
+            if component == "video" || component == "t" || component.hasPrefix("@") {
+                continue
+            }
+            
+            // Check if component looks like a location
+            if component.contains("-") && component.count > 3 {
+                let locationName = component.replacingOccurrences(of: "-", with: " ")
+                if locationName.contains("restaurant") || locationName.contains("cafe") ||
+                   locationName.contains("bar") || locationName.contains("hotel") ||
+                   locationName.contains("shop") || locationName.contains("store") {
+                    return await geocodeAddress(locationName)
+                }
+            }
         }
         
         return nil
@@ -137,13 +188,30 @@ struct URLParser {
             "address=",
             "location=",
             "place=",
-            "venue="
+            "venue=",
+            "city=",
+            "state=",
+            "country="
         ]
         
         for pattern in locationPatterns {
             if let range = urlString.range(of: pattern),
                let locationString = extractValue(from: urlString, after: range.upperBound) {
                 return await geocodeAddress(locationString)
+            }
+        }
+        
+        // Try to extract location from hashtags or mentions in TikTok URLs
+        if urlString.contains("tiktok.com") {
+            let hashtagPattern = "#[A-Za-z0-9]+"
+            if let range = urlString.range(of: hashtagPattern, options: .regularExpression) {
+                let hashtag = String(urlString[range]).replacingOccurrences(of: "#", with: "")
+                
+                // Check if hashtag looks like a location
+                if hashtag.count > 2 && !hashtag.contains("recipe") && !hashtag.contains("food") &&
+                   !hashtag.contains("cooking") && !hashtag.contains("viral") {
+                    return await geocodeAddress(hashtag)
+                }
             }
         }
         
@@ -210,24 +278,79 @@ struct URLParser {
     }
     
     private static func parseTikTokURL(url: URL, path: String) -> ParsedURL? {
-        // TikTok URLs typically look like: https://www.tiktok.com/@username/video/1234567890
-        let components = path.components(separatedBy: "/").filter { !$0.isEmpty }
+        // Modern TikTok URLs can be:
+        // https://www.tiktok.com/@username/video/1234567890
+        // https://www.tiktok.com/t/ZTd1234567890/
+        // https://vm.tiktok.com/ABC123/
+        // https://tiktok.com/@username/video/1234567890
         
+        let components = path.components(separatedBy: "/").filter { !$0.isEmpty }
+        let queryItems = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+        
+        var title = "TikTok Video"
+        var username: String?
+        var videoId: String?
+        var tags = ["tiktok", "video"]
+        
+        // Parse different TikTok URL formats
         if components.count >= 3 && components[1] == "video" {
-            let username = components[0].replacingOccurrences(of: "@", with: "")
-            _ = components[2] // videoId - not used but kept for future reference
-            
-            return ParsedURL(
-                title: "TikTok Video by @\(username)",
-                description: "TikTok video from @\(username)",
-                contentType: .recipe, // Often recipes on TikTok
-                url: url.absoluteString,
-                tags: ["tiktok", "video", username],
-                detectedLocation: nil
-            )
+            // Format: /@username/video/1234567890
+            username = components[0].replacingOccurrences(of: "@", with: "")
+            videoId = components[2]
+            title = "TikTok Video by @\(username!)"
+            tags.append(username!)
+        } else if components.count >= 1 && components[0].hasPrefix("t/") {
+            // Format: /t/ZTd1234567890/
+            videoId = String(components[0].dropFirst(2)) // Remove "t/" prefix
+            title = "TikTok Video"
+        } else if path.contains("@") {
+            // Try to extract username from path
+            let usernameMatch = path.range(of: "@[^/]+", options: .regularExpression)
+            if let match = usernameMatch {
+                username = String(path[match]).replacingOccurrences(of: "@", with: "")
+                title = "TikTok Video by @\(username!)"
+                tags.append(username!)
+            }
         }
         
-        return nil
+        // Try to extract additional info from query parameters
+        if let lang = queryItems.first(where: { $0.name == "lang" })?.value {
+            tags.append("lang:\(lang)")
+        }
+        
+        // Determine content type based on URL patterns or tags
+        var contentType: ContentType = .other
+        let urlString = url.absoluteString.lowercased()
+        
+        if urlString.contains("recipe") || urlString.contains("cooking") || urlString.contains("food") {
+            contentType = .recipe
+            tags.append("recipe")
+        } else if urlString.contains("restaurant") || urlString.contains("food") || urlString.contains("eat") {
+            contentType = .restaurant
+            tags.append("restaurant")
+        } else if urlString.contains("travel") || urlString.contains("place") || urlString.contains("location") {
+            contentType = .place
+            tags.append("travel")
+        } else if urlString.contains("shop") || urlString.contains("store") || urlString.contains("buy") {
+            contentType = .shop
+            tags.append("shop")
+        } else if urlString.contains("activity") || urlString.contains("fun") || urlString.contains("experience") {
+            contentType = .activity
+            tags.append("activity")
+        } else {
+            // Default to recipe since TikTok is often used for food/recipe inspiration
+            contentType = .recipe
+            tags.append("inspiration")
+        }
+        
+        return ParsedURL(
+            title: title,
+            description: "TikTok video\(username != nil ? " from @\(username!)" : "")",
+            contentType: contentType,
+            url: url.absoluteString,
+            tags: tags,
+            detectedLocation: nil
+        )
     }
     
     private static func parseInstagramURL(url: URL, path: String) -> ParsedURL? {
