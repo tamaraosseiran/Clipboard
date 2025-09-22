@@ -289,19 +289,16 @@ struct URLParser {
         
         var title = "TikTok Video"
         var username: String?
-        var videoId: String?
         var tags = ["tiktok", "video"]
         
         // Parse different TikTok URL formats
         if components.count >= 3 && components[1] == "video" {
             // Format: /@username/video/1234567890
             username = components[0].replacingOccurrences(of: "@", with: "")
-            videoId = components[2]
             title = "TikTok Video by @\(username!)"
             tags.append(username!)
         } else if components.count >= 1 && components[0].hasPrefix("t/") {
             // Format: /t/ZTd1234567890/
-            videoId = String(components[0].dropFirst(2)) // Remove "t/" prefix
             title = "TikTok Video"
         } else if path.contains("@") {
             // Try to extract username from path

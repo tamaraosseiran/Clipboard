@@ -119,6 +119,24 @@ struct ContentView: View {
                 sharedURL = url
             }
         }
+        .onAppear {
+            checkAppGroupForSharedURLs()
+        }
+    }
+    
+    private func checkAppGroupForSharedURLs() {
+        guard let defaults = UserDefaults(suiteName: "group.com.tamaraosseiran.clipboard") else { return }
+        
+        if let inbox = defaults.array(forKey: "SharedURLInbox") as? [String], !inbox.isEmpty {
+            // Get the first URL from the inbox
+            if let firstURL = inbox.first {
+                sharedURL = firstURL
+            }
+            
+            // Clear the inbox
+            defaults.removeObject(forKey: "SharedURLInbox")
+            defaults.synchronize()
+        }
     }
 }
 

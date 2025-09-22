@@ -1,0 +1,12 @@
+{
+  "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/Clipboard.xcodeproj/AppGroupIdentifier.swift" : {
+    "abi-baseline-json" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/ShareLinkExtension.build/Objects-normal/arm64/ShareLinkExtension.abi.json",
+    "const-values" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/ShareLinkExtension.build/Objects-normal/arm64/ShareLinkExtension-primary.swiftconstvalues",
+    "dependencies" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/ShareLinkExtension.build/Objects-normal/arm64/ShareLinkExtension-primary.d",
+    "diagnostics" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/ShareLinkExtension.build/Objects-normal/arm64/ShareLinkExtension-primary.dia",
+    "objc-header" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/ShareLinkExtension.build/Objects-normal/arm64/ShareLinkExtension-Swift.h",
+    "swiftdoc" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/ShareLinkExtension.build/Objects-normal/arm64/ShareLinkExtension.swiftdoc",
+    "swiftmodule" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/ShareLinkExtension.build/Objects-normal/arm64/ShareLinkExtension.swiftmodule",
+    "swiftsourceinfo" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/ShareLinkExtension.build/Objects-normal/arm64/ShareLinkExtension.swiftsourceinfo"
+  }
+}

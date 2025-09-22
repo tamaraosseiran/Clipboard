@@ -1,0 +1,152 @@
+{
+  "source": "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/Clipboard/AddItemView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Add Item",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 153
+        }
+      },
+      {
+        "comment": "",
+        "key": "Name",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 37
+        }
+      },
+      {
+        "comment": "",
+        "key": "Name",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 40
+        }
+      },
+      {
+        "comment": "",
+        "key": "Category",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 44
+        }
+      },
+      {
+        "comment": "",
+        "key": "Category",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 57
+        }
+      },
+      {
+        "comment": "",
+        "key": "Enter full address for map pinning",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 61
+        }
+      },
+      {
+        "comment": "",
+        "key": "Use This Address",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 77
+        }
+      },
+      {
+        "comment": "",
+        "key": "Detected Location",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 69
+        }
+      },
+      {
+        "comment": "",
+        "key": "Location",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 86
+        }
+      },
+      {
+        "comment": "",
+        "key": "Enter a full address so it can be pinned on the map",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 88
+        }
+      },
+      {
+        "comment": "",
+        "key": "Check In",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 96
+        }
+      },
+      {
+        "comment": "",
+        "key": "Overall Rating",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 129
+        }
+      },
+      {
+        "comment": "",
+        "key": "Check-ins",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 141
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tap 'Check In' to record each visit",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 143
+        }
+      },
+      {
+        "comment": "",
+        "key": "Note",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 147
+        }
+      },
+      {
+        "comment": "",
+        "key": "Note",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 150
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 157
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 163
+        }
+      }
+    ]
+  },
+  "version": 1
+}

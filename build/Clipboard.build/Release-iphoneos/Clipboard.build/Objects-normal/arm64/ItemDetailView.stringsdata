@@ -1,0 +1,216 @@
+{
+  "source": "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/Clipboard/ItemDetailView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Details",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 226
+        }
+      },
+      {
+        "comment": "",
+        "key": "Location",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 95
+        }
+      },
+      {
+        "comment": "",
+        "key": "View Map",
+        "location": {
+          "startingColumn": 36,
+          "startingLine": 98
+        }
+      },
+      {
+        "comment": "",
+        "key": "Category",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 121
+        }
+      },
+      {
+        "comment": "",
+        "key": "Link",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 142
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tags",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 166
+        }
+      },
+      {
+        "comment": "",
+        "key": "Notes",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 197
+        }
+      },
+      {
+        "comment": "",
+        "key": "Created: %@",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 214
+        }
+      },
+      {
+        "comment": "",
+        "key": "Updated: %@",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 218
+        }
+      },
+      {
+        "comment": "",
+        "key": "Edit",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 230
+        }
+      },
+      {
+        "comment": "",
+        "key": "Done",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 304
+        }
+      },
+      {
+        "comment": "",
+        "key": "Edit Item",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 394
+        }
+      },
+      {
+        "comment": "",
+        "key": "Basic Information",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 345
+        }
+      },
+      {
+        "comment": "",
+        "key": "Status",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 368
+        }
+      },
+      {
+        "comment": "",
+        "key": "Additional Information",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 386
+        }
+      },
+      {
+        "comment": "",
+        "key": "Title",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 346
+        }
+      },
+      {
+        "comment": "",
+        "key": "Description",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 348
+        }
+      },
+      {
+        "comment": "",
+        "key": "URL",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 351
+        }
+      },
+      {
+        "comment": "",
+        "key": "Type",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 355
+        }
+      },
+      {
+        "comment": "",
+        "key": "Visited",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 369
+        }
+      },
+      {
+        "comment": "",
+        "key": "Favorite",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 370
+        }
+      },
+      {
+        "comment": "",
+        "key": "Rating",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 374
+        }
+      },
+      {
+        "comment": "",
+        "key": "Notes",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 387
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tags (comma separated)",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 390
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 398
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 404
+        }
+      }
+    ]
+  },
+  "version": 1
+}
