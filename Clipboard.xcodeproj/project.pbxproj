@@ -245,7 +245,7 @@
 		};
 		BED3EF128D964CFFAA941B78 /* ShareExtension */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 01BF9F512E81FC5C00EDCF72 /* Build configuration list */;
+			buildConfigurationList = 01BF9F512E81FC5C00EDCF72 /* Build configuration list for PBXNativeTarget "ShareExtension" */;
 			buildPhases = (
 			);
 			buildRules = (
@@ -670,7 +670,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = ShareLinkExtension/Info.plist;
+				INFOPLIST_FILE = Clipboard/ShareLinkExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ShareLinkExtension;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
@@ -699,7 +699,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = ShareLinkExtension/Info.plist;
+				INFOPLIST_FILE = Clipboard/ShareLinkExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ShareLinkExtension;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
@@ -769,7 +769,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		01BF9F512E81FC5C00EDCF72 /* Build configuration list */ = {
+		01BF9F512E81FC5C00EDCF72 /* Build configuration list for PBXNativeTarget "ShareExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				01BF9F3B2E80C66A00EDCF72 /* Debug */,
