@@ -54,7 +54,6 @@ struct URLParser {
         
         var title = "TikTok Video"
         var username: String?
-        var videoId: String?
         var tags = ["tiktok", "video"]
         var description = "TikTok video"
         
@@ -62,13 +61,11 @@ struct URLParser {
         if components.count >= 3 && components[1] == "video" {
             // Format: /@username/video/1234567890
             username = components[0].replacingOccurrences(of: "@", with: "")
-            videoId = components[2]
             title = "TikTok Video by @\(username!)"
             description = "TikTok video from @\(username!)"
             tags.append(username!)
         } else if components.count >= 1 && components[0].hasPrefix("t/") {
             // Format: /t/ZTd1234567890/
-            videoId = String(components[0].dropFirst(2))
             title = "TikTok Video"
         } else if path.contains("@") {
             // Try to extract username from path
@@ -141,12 +138,10 @@ struct URLParser {
         
         var title = "Instagram Post"
         var username: String?
-        var postId: String?
         var tags = ["instagram", "post"]
         
         if components.count >= 2 && components[0] == "p" {
             // Format: /p/ABC123/
-            postId = components[1]
             title = "Instagram Post"
         } else if components.count >= 1 && components[0].hasPrefix("@") {
             // Format: /@username/
@@ -227,7 +222,7 @@ struct URLParser {
         
         var title = "Google Maps Location"
         var address: String?
-        var tags = ["google", "maps", "location"]
+        let tags = ["google", "maps", "location"]
         
         // Try to extract location name from query parameters
         if let q = queryItems.first(where: { $0.name == "q" })?.value {
