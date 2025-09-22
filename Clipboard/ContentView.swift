@@ -20,6 +20,8 @@ struct ContentView: View {
     @State private var showingAddItem = false
     @State private var selectedFilter: ContentType? = nil
     @State private var sharedURL: String?
+    @State private var showingSharedContentPreview = false
+    @State private var pendingSharedContent: SharedContentPreview?
     
     var filteredItems: [ContentItem] {
         var filtered = items
@@ -114,10 +116,26 @@ struct ContentView: View {
         .sheet(item: $sharedURL) { url in
             AddItemView(prefilledURL: url)
         }
+        .sheet(isPresented: $showingSharedContentPreview) {
+            if let content = pendingSharedContent {
+                SharedContentPreviewView(
+                    content: content,
+                    onSave: { parsedContent in
+                        saveSharedContent(parsedContent)
+                        showingSharedContentPreview = false
+                        pendingSharedContent = nil
+                    },
+                    onCancel: {
+                        showingSharedContentPreview = false
+                        pendingSharedContent = nil
+                    }
+                )
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("AddSharedURL"))) { notification in
             if let url = notification.userInfo?["url"] as? String {
                 print("📱 Received shared URL via NotificationCenter: \(url)")
-                sharedURL = url
+                processSharedURL(url)
             }
         }
         .onAppear {
@@ -137,8 +155,8 @@ struct ContentView: View {
             print("📱 Found \(inbox.count) shared URLs in inbox: \(inbox)")
             // Get the first URL from the inbox
             if let firstURL = inbox.first {
-                print("📱 Setting sharedURL to: \(firstURL)")
-                sharedURL = firstURL
+                print("📱 Processing shared URL: \(firstURL)")
+                processSharedURL(firstURL)
             }
             
             // Clear the inbox
@@ -147,6 +165,259 @@ struct ContentView: View {
             print("📱 Cleared inbox")
         } else {
             print("📱 No shared URLs found in inbox")
+        }
+    }
+    
+    private func processSharedURL(_ urlString: String) {
+        guard let url = URL(string: urlString) else { return }
+        
+        // Parse the URL to extract information
+        let parsedURL = URLParser.parseURL(url)
+        
+        // Create a preview object for user validation
+        let preview = SharedContentPreview(
+            originalURL: urlString,
+            title: parsedURL.title,
+            description: parsedURL.description,
+            contentType: parsedURL.contentType,
+            detectedLocation: parsedURL.detectedLocation,
+            tags: parsedURL.tags
+        )
+        
+        // Show the preview for user validation
+        pendingSharedContent = preview
+        showingSharedContentPreview = true
+    }
+    
+    private func saveSharedContent(_ content: ParsedContent) {
+        // Create a new ContentItem from the parsed content
+        let newItem = ContentItem(
+            title: content.title,
+            itemDescription: content.description,
+            url: content.originalURL,
+            contentType: content.contentType.rawValue,
+            tags: content.tags,
+            location: content.detectedLocation,
+            rating: nil,
+            isVisited: false,
+            isFavorite: false,
+            createdAt: Date()
+        )
+        
+        modelContext.insert(newItem)
+        
+        do {
+            try modelContext.save()
+            print("✅ Successfully saved shared content: \(content.title)")
+        } catch {
+            print("❌ Failed to save shared content: \(error)")
+        }
+    }
+}
+
+// MARK: - Shared Content Preview Models
+struct SharedContentPreview {
+    let originalURL: String
+    let title: String
+    let description: String
+    let contentType: ContentType
+    let detectedLocation: Location?
+    let tags: [String]
+}
+
+struct ParsedContent {
+    let title: String
+    let description: String
+    let contentType: ContentType
+    let originalURL: String
+    let detectedLocation: Location?
+    let tags: [String]
+}
+
+// MARK: - Shared Content Preview View
+struct SharedContentPreviewView: View {
+    let content: SharedContentPreview
+    let onSave: (ParsedContent) -> Void
+    let onCancel: () -> Void
+    
+    @State private var editedTitle: String
+    @State private var editedDescription: String
+    @State private var selectedContentType: ContentType
+    @State private var editedLocation: String
+    @State private var isEditingLocation = false
+    
+    init(content: SharedContentPreview, onSave: @escaping (ParsedContent) -> Void, onCancel: @escaping () -> Void) {
+        self.content = content
+        self.onSave = onSave
+        self.onCancel = onCancel
+        self._editedTitle = State(initialValue: content.title)
+        self._editedDescription = State(initialValue: content.description)
+        self._selectedContentType = State(initialValue: content.contentType)
+        self._editedLocation = State(initialValue: content.detectedLocation?.displayAddress ?? "")
+    }
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    // Header
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Review Shared Content")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                        
+                        Text("Check and edit the information before saving")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.horizontal)
+                    
+                    // Content Preview Card
+                    VStack(alignment: .leading, spacing: 16) {
+                        // Source URL
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Source")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .textCase(.uppercase)
+                            
+                            Text(content.originalURL)
+                                .font(.caption)
+                                .foregroundColor(.blue)
+                                .lineLimit(2)
+                        }
+                        
+                        Divider()
+                        
+                        // Title
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Title")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .textCase(.uppercase)
+                            
+                            TextField("Enter title", text: $editedTitle)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                        }
+                        
+                        // Description
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Description")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .textCase(.uppercase)
+                            
+                            TextField("Enter description", text: $editedDescription, axis: .vertical)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .lineLimit(3...6)
+                        }
+                        
+                        // Category
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Category")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .textCase(.uppercase)
+                            
+                            Picker("Category", selection: $selectedContentType) {
+                                ForEach(ContentType.allCases, id: \.self) { type in
+                                    HStack {
+                                        Text(type.icon)
+                                            .font(.title2)
+                                            .frame(width: 25)
+                                        Text(type.rawValue)
+                                            .font(.body)
+                                    }
+                                    .tag(type)
+                                }
+                            }
+                            .pickerStyle(NavigationLinkPickerStyle())
+                        }
+                        
+                        // Location
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Location")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .textCase(.uppercase)
+                            
+                            if isEditingLocation {
+                                TextField("Enter address", text: $editedLocation)
+                                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                            } else {
+                                HStack {
+                                    Text(editedLocation.isEmpty ? "No location detected" : editedLocation)
+                                        .foregroundColor(editedLocation.isEmpty ? .secondary : .primary)
+                                    
+                                    Spacer()
+                                    
+                                    Button("Edit") {
+                                        isEditingLocation = true
+                                    }
+                                    .font(.caption)
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(Color(.systemGray6))
+                                .cornerRadius(8)
+                            }
+                        }
+                        
+                        // Tags
+                        if !content.tags.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Tags")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .textCase(.uppercase)
+                                
+                                LazyVGrid(columns: [GridItem(.adaptive(minimum: 80))], spacing: 8) {
+                                    ForEach(content.tags, id: \.self) { tag in
+                                        Text(tag)
+                                            .font(.caption)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(Color.blue.opacity(0.1))
+                                            .foregroundColor(.blue)
+                                            .cornerRadius(12)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .padding()
+                    .background(Color(.systemBackground))
+                    .cornerRadius(12)
+                    .shadow(radius: 2)
+                    .padding(.horizontal)
+                }
+            }
+            .navigationTitle("Add to Clipboard")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel", action: onCancel)
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        let parsedContent = ParsedContent(
+                            title: editedTitle,
+                            description: editedDescription,
+                            contentType: selectedContentType,
+                            originalURL: content.originalURL,
+                            detectedLocation: editedLocation.isEmpty ? nil : Location(
+                                latitude: content.detectedLocation?.latitude ?? 0,
+                                longitude: content.detectedLocation?.longitude ?? 0,
+                                address: editedLocation
+                            ),
+                            tags: content.tags
+                        )
+                        onSave(parsedContent)
+                    }
+                    .fontWeight(.semibold)
+                }
+            }
         }
     }
 }
@@ -313,127 +584,6 @@ struct Triangle: Shape {
         path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
         path.closeSubpath()
         return path
-    }
-}
-
-
-// MARK: - Categories View
-struct CategoriesView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var categories: [Category]
-    @State private var showingAddCategory = false
-    
-    var body: some View {
-        List {
-            ForEach(categories) { category in
-                NavigationLink(destination: CategoryDetailView(category: category)) {
-                    HStack {
-                        Image(systemName: category.icon)
-                            .foregroundColor(Color(category.color))
-                            .frame(width: 30)
-                        
-                        Text(category.name)
-                        
-                        Spacer()
-                        
-                        Text("\(category.items?.count ?? 0)")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
-            }
-            .onDelete(perform: deleteCategories)
-        }
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { showingAddCategory = true }) {
-                    Image(systemName: "plus")
-                }
-            }
-        }
-        .sheet(isPresented: $showingAddCategory) {
-            AddCategoryView()
-        }
-    }
-    
-    private func deleteCategories(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(categories[index])
-            }
-        }
-    }
-}
-
-// MARK: - Stats View
-struct StatsView: View {
-    let items: [ContentItem]
-    
-    var body: some View {
-        ScrollView {
-            LazyVGrid(columns: [
-                GridItem(.flexible()),
-                GridItem(.flexible())
-            ], spacing: 16) {
-                StatCard(title: "Total Items", value: "\(items.count)", icon: "list.bullet", color: .blue)
-                StatCard(title: "Visited", value: "\(items.filter { $0.isVisited }.count)", icon: "checkmark.circle", color: .green)
-                StatCard(title: "Favorites", value: "\(items.filter { $0.isFavorite }.count)", icon: "heart", color: .red)
-                StatCard(title: "Rated", value: "\(items.filter { $0.rating != nil }.count)", icon: "star", color: .yellow)
-            }
-            .padding()
-            
-            // Content Type Breakdown
-            VStack(alignment: .leading, spacing: 12) {
-                Text("By Type")
-                    .font(.headline)
-                    .padding(.horizontal)
-                
-                ForEach(ContentType.allCases, id: \.self) { type in
-                    let count = items.filter { $0.contentTypeEnum == type }.count
-                    HStack {
-                        Text(type.icon)
-                            .font(.title3)
-                            .frame(width: 20)
-                        
-                        Text(type.rawValue)
-                        
-                        Spacer()
-                        
-                        Text("\(count)")
-                            .fontWeight(.semibold)
-                    }
-                    .padding(.horizontal)
-                }
-            }
-        }
-    }
-}
-
-// MARK: - Stat Card
-struct StatCard: View {
-    let title: String
-    let value: String
-    let icon: String
-    let color: Color
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(color)
-            
-            Text(value)
-                .font(.title)
-                .fontWeight(.bold)
-            
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(radius: 2)
     }
 }
 

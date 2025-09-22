@@ -7,13 +7,11 @@
 
 import SwiftUI
 import SwiftData
-import MapKit
+import CoreLocation
 
 struct AddItemView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    
-    let prefilledURL: String?
     
     @State private var name = ""
     @State private var location = ""
@@ -22,9 +20,7 @@ struct AddItemView: View {
     @State private var rating = 0
     @State private var note = ""
     
-    // For location detection
-    @State private var detectedLocation: Location?
-    @State private var isDetectingLocation = false
+    let prefilledURL: String?
     
     init(prefilledURL: String? = nil) {
         self.prefilledURL = prefilledURL
@@ -35,17 +31,14 @@ struct AddItemView: View {
             Form {
                 Section {
                     TextField("Name", text: $name)
-                        .textFieldStyle(.plain)
-                } header: {
-                    Text("Name")
-                }
-                
-                Section {
+                    TextField("Address", text: $location)
+                    
                     Picker("Category", selection: $selectedContentType) {
                         ForEach(ContentType.allCases, id: \.self) { type in
-                            HStack(spacing: 8) {
+                            HStack {
                                 Text(type.icon)
                                     .font(.title2)
+                                    .frame(width: 25)
                                 Text(type.rawValue)
                                     .font(.body)
                             }
@@ -54,47 +47,17 @@ struct AddItemView: View {
                     }
                     .pickerStyle(NavigationLinkPickerStyle())
                 } header: {
-                    Text("Category")
-                }
-                
-                Section {
-                    TextField("Enter full address for map pinning", text: $location)
-                        .textFieldStyle(.plain)
-                    
-                    if let detectedLocation = detectedLocation {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Image(systemName: "mappin.circle.fill")
-                                    .foregroundColor(.red)
-                                Text("Detected Location")
-                                    .font(.headline)
-                            }
-                            
-                            Text(detectedLocation.displayAddress)
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                            
-                            Button("Use This Address") {
-                                location = detectedLocation.displayAddress
-                                self.detectedLocation = nil
-                            }
-                            .buttonStyle(.borderedProminent)
-                        }
-                        .padding(.vertical, 4)
-                    }
-                } header: {
-                    Text("Location")
-                } footer: {
-                    Text("Enter a full address so it can be pinned on the map")
+                    Text("Basic Information")
                 }
                 
                 Section {
                     Button(action: addCheckIn) {
                         HStack(spacing: 8) {
                             Image(systemName: "plus.circle.fill")
-                                .foregroundColor(.blue)
+                                .font(.title3)
                             Text("Check In")
-                                .foregroundColor(.blue)
+                                .font(.body)
+                                .fontWeight(.medium)
                         }
                     }
                     
@@ -114,13 +77,12 @@ struct AddItemView: View {
                                 Button(action: {
                                     visitDates.remove(at: index)
                                 }) {
-                                    Image(systemName: "trash.circle.fill")
+                                    Image(systemName: "trash")
                                         .foregroundColor(.red)
                                         .font(.title3)
                                 }
                                 .buttonStyle(.plain)
                             }
-                            .padding(.vertical, 4)
                         }
                     }
                     
@@ -147,40 +109,39 @@ struct AddItemView: View {
                     TextField("Note", text: $note, axis: .vertical)
                         .lineLimit(3...6)
                 } header: {
-                    Text("Note")
+                    Text("Notes")
                 }
             }
             .navigationTitle("Add Item")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
+                    Button("Cancel", action: dismiss.callAsFunction)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Save") {
-                        saveItem()
-                    }
-                    .disabled(name.isEmpty)
+                    Button("Save", action: saveItem)
+                        .fontWeight(.semibold)
                 }
             }
         }
         .onAppear {
-            if let prefilledURL = prefilledURL, !prefilledURL.isEmpty {
-                // Parse URL and auto-fill name and category
-                if let parsed = URLParser.parseURL(prefilledURL) {
-                    name = parsed.title
-                    selectedContentType = parsed.contentType
-                    location = parsed.detectedLocation?.displayAddress ?? ""
-                }
-                
-                // Trigger location detection for prefilled URL
-                Task {
-                    await detectLocationFromURL(prefilledURL)
-                }
+            if let urlString = prefilledURL {
+                parseURL(urlString)
             }
+        }
+    }
+    
+    private func parseURL(_ urlString: String) {
+        guard let url = URL(string: urlString) else { return }
+        
+        let parsedURL = URLParser.parseURL(url)
+        
+        name = parsedURL.title
+        selectedContentType = parsedURL.contentType
+        
+        if let detectedLocation = parsedURL.detectedLocation {
+            location = detectedLocation.displayAddress
         }
     }
     
@@ -191,49 +152,29 @@ struct AddItemView: View {
     private func saveItem() {
         let newItem = ContentItem(
             title: name,
-            description: nil,
+            description: note,
             url: prefilledURL,
             contentType: selectedContentType,
-            location: location.isEmpty ? nil : createLocationFromString(location),
-            category: nil,
+            location: location.isEmpty ? nil : Location(latitude: 0, longitude: 0, address: location),
             rating: rating > 0 ? rating : nil,
             isVisited: !visitDates.isEmpty,
             isFavorite: false,
-            notes: note.isEmpty ? nil : note,
+            notes: note,
             tags: []
         )
         
         modelContext.insert(newItem)
-        dismiss()
-    }
-    
-    private func createLocationFromString(_ locationString: String) -> Location? {
-        // For now, create a simple location with just the address
-        // In a real app, you'd geocode this string to get coordinates
-        return Location(
-            latitude: 0.0, // Placeholder
-            longitude: 0.0, // Placeholder
-            address: locationString
-        )
-    }
-    
-    private func detectLocationFromURL(_ urlString: String) async {
-        isDetectingLocation = true
         
-        if let location = await URLParser.detectLocation(from: urlString) {
-            await MainActor.run {
-                detectedLocation = location
-                isDetectingLocation = false
-            }
-        } else {
-            await MainActor.run {
-                isDetectingLocation = false
-            }
+        do {
+            try modelContext.save()
+            dismiss()
+        } catch {
+            print("Failed to save item: \(error)")
         }
     }
 }
 
-
 #Preview {
     AddItemView()
+        .modelContainer(for: ContentItem.self, inMemory: true)
 }
