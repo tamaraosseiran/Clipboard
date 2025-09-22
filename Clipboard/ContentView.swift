@@ -193,15 +193,15 @@ struct ContentView: View {
         // Create a new ContentItem from the parsed content
         let newItem = ContentItem(
             title: content.title,
-            itemDescription: content.description,
+            description: content.description,
             url: content.originalURL,
-            contentType: content.contentType.rawValue,
-            tags: content.tags,
+            contentType: content.contentType,
             location: content.detectedLocation,
             rating: nil,
             isVisited: false,
             isFavorite: false,
-            createdAt: Date()
+            notes: content.description,
+            tags: content.tags
         )
         
         modelContext.insert(newItem)
