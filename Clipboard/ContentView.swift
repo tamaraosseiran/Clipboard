@@ -116,26 +116,37 @@ struct ContentView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("AddSharedURL"))) { notification in
             if let url = notification.userInfo?["url"] as? String {
+                print("📱 Received shared URL via NotificationCenter: \(url)")
                 sharedURL = url
             }
         }
         .onAppear {
+            print("📱 ContentView appeared, checking for shared URLs...")
             checkAppGroupForSharedURLs()
         }
     }
     
     private func checkAppGroupForSharedURLs() {
-        guard let defaults = UserDefaults(suiteName: "group.com.tamaraosseiran.clipboard") else { return }
+        print("📱 Checking App Group for shared URLs...")
+        guard let defaults = UserDefaults(suiteName: "group.com.tamaraosseiran.clipboard") else { 
+            print("❌ Failed to access App Group UserDefaults")
+            return 
+        }
         
         if let inbox = defaults.array(forKey: "SharedURLInbox") as? [String], !inbox.isEmpty {
+            print("📱 Found \(inbox.count) shared URLs in inbox: \(inbox)")
             // Get the first URL from the inbox
             if let firstURL = inbox.first {
+                print("📱 Setting sharedURL to: \(firstURL)")
                 sharedURL = firstURL
             }
             
             // Clear the inbox
             defaults.removeObject(forKey: "SharedURLInbox")
             defaults.synchronize()
+            print("📱 Cleared inbox")
+        } else {
+            print("📱 No shared URLs found in inbox")
         }
     }
 }

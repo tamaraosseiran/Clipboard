@@ -73,11 +73,11 @@ final class ShareViewController: SLComposeServiceViewController {
 
     private func saveToInbox(_ urls: [URL]) {
         guard !urls.isEmpty else { return }
-        guard let defaults = UserDefaults(suiteName: AppGroup.identifier) else { return }
+        guard let defaults = UserDefaults(suiteName: "group.com.tamaraosseiran.clipboard") else { return }
 
-        var inbox = defaults.array(forKey: SharedKeys.inbox) as? [String] ?? []
+        var inbox = defaults.array(forKey: "SharedURLInbox") as? [String] ?? []
         inbox.append(contentsOf: urls.map { $0.absoluteString })
-        defaults.set(inbox, forKey: SharedKeys.inbox)
+        defaults.set(inbox, forKey: "SharedURLInbox")
         defaults.synchronize()
     }
 
