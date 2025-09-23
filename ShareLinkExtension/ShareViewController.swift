@@ -19,9 +19,16 @@ final class ShareViewController: SLComposeServiceViewController {
     override func didSelectPost() {
         // Called after the user taps Post
         print("📤 ShareLinkExtension: didSelectPost called.")
+        
+        // Show user feedback
+        let alert = UIAlertController(title: "Share Extension", message: "Processing shared content...", preferredStyle: .alert)
+        present(alert, animated: true)
+        
         handleIncomingItems { [weak self] in
             print("✅ ShareLinkExtension: Request completed.")
-            self?.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
+            alert.dismiss(animated: true) {
+                self?.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
+            }
         }
     }
 
@@ -77,6 +84,13 @@ final class ShareViewController: SLComposeServiceViewController {
 
         group.notify(queue: .main) {
             print("📦 ShareLinkExtension: Collected \(collectedURLs.count) URLs. Saving to inbox.")
+            
+            // Show user feedback about what was found
+            let message = collectedURLs.isEmpty ? "No URLs found" : "Found \(collectedURLs.count) URL(s): \(collectedURLs.map { $0.absoluteString }.joined(separator: ", "))"
+            let alert = UIAlertController(title: "URLs Found", message: message, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            self.present(alert, animated: true)
+            
             self.saveToInbox(collectedURLs)
             completion()
         }
@@ -97,6 +111,11 @@ final class ShareViewController: SLComposeServiceViewController {
         defaults.set(inbox, forKey: "SharedURLInbox")
         defaults.synchronize()
         print("✅ ShareLinkExtension: Saved \(urls.count) URLs to inbox. Current inbox count: \(inbox.count)")
+        
+        // Show final confirmation
+        let finalAlert = UIAlertController(title: "Success", message: "Saved \(urls.count) URL(s) to Clipboard app!", preferredStyle: .alert)
+        finalAlert.addAction(UIAlertAction(title: "OK", style: .default))
+        self.present(finalAlert, animated: true)
     }
 
     private static func firstURL(in text: String) -> URL? {

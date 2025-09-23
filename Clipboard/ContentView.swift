@@ -153,6 +153,13 @@ struct ContentView: View {
         
         if let inbox = defaults.array(forKey: "SharedURLInbox") as? [String], !inbox.isEmpty {
             print("📱 Found \(inbox.count) shared URLs in inbox: \(inbox)")
+            
+            // Show user feedback
+            DispatchQueue.main.async {
+                // You could add a toast or alert here if needed
+                print("📱 Main app received \(inbox.count) shared URLs!")
+            }
+            
             // Get the first URL from the inbox
             if let firstURL = inbox.first {
                 print("📱 Processing shared URL: \(firstURL)")
