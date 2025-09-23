@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDisplayName</key>
-	<string>Clipboard</string>
+	<string>Spots</string>
 	<key>CFBundleExecutable</key>
 	<string>Clipboard</string>
 	<key>CFBundleIconName</key>
