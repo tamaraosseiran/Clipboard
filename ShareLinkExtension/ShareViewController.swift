@@ -18,7 +18,9 @@ final class ShareViewController: SLComposeServiceViewController {
 
     override func didSelectPost() {
         // Called after the user taps Post
+        print("📤 ShareLinkExtension: didSelectPost called.")
         handleIncomingItems { [weak self] in
+            print("✅ ShareLinkExtension: Request completed.")
             self?.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
         }
     }
@@ -29,13 +31,16 @@ final class ShareViewController: SLComposeServiceViewController {
     }
 
     private func handleIncomingItems(completion: @escaping () -> Void) {
+        print("🔍 ShareLinkExtension: Handling incoming items...")
         guard let items = extensionContext?.inputItems as? [NSExtensionItem] else {
+            print("❌ ShareLinkExtension: No input items found.")
             completion()
             return
         }
 
         let providers = items.flatMap { $0.attachments ?? [] }
         if providers.isEmpty {
+            print("❌ ShareLinkExtension: No attachments found.")
             completion()
             return
         }
@@ -49,8 +54,10 @@ final class ShareViewController: SLComposeServiceViewController {
                 provider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { item, _ in
                     defer { group.leave() }
                     if let url = item as? URL {
+                        print("🔗 ShareLinkExtension: Found URL: \(url.absoluteString)")
                         collectedURLs.append(url)
                     } else if let str = item as? String, let url = URL(string: str) {
+                        print("🔗 ShareLinkExtension: Found URL (from string): \(url.absoluteString)")
                         collectedURLs.append(url)
                     }
                 }
@@ -59,26 +66,37 @@ final class ShareViewController: SLComposeServiceViewController {
                 provider.loadItem(forTypeIdentifier: UTType.text.identifier, options: nil) { item, _ in
                     defer { group.leave() }
                     if let text = item as? String, let detected = Self.firstURL(in: text) {
+                        print("📝 ShareLinkExtension: Found text with URL: \(detected.absoluteString)")
                         collectedURLs.append(detected)
+                    } else if let text = item as? String {
+                        print("📝 ShareLinkExtension: Found text, no URL detected: \(text)")
                     }
                 }
             }
         }
 
         group.notify(queue: .main) {
+            print("📦 ShareLinkExtension: Collected \(collectedURLs.count) URLs. Saving to inbox.")
             self.saveToInbox(collectedURLs)
             completion()
         }
     }
 
     private func saveToInbox(_ urls: [URL]) {
-        guard !urls.isEmpty else { return }
-        guard let defaults = UserDefaults(suiteName: "group.com.tamaraosseiran.clipboard") else { return }
+        guard !urls.isEmpty else {
+            print("⚠️ ShareLinkExtension: No URLs to save to inbox.")
+            return
+        }
+        guard let defaults = UserDefaults(suiteName: "group.com.tamaraosseiran.clipboard") else {
+            print("❌ ShareLinkExtension: Failed to get UserDefaults for App Group.")
+            return
+        }
 
         var inbox = defaults.array(forKey: "SharedURLInbox") as? [String] ?? []
         inbox.append(contentsOf: urls.map { $0.absoluteString })
         defaults.set(inbox, forKey: "SharedURLInbox")
         defaults.synchronize()
+        print("✅ ShareLinkExtension: Saved \(urls.count) URLs to inbox. Current inbox count: \(inbox.count)")
     }
 
     private static func firstURL(in text: String) -> URL? {
