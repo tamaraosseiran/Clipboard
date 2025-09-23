@@ -38,6 +38,15 @@ struct ClipboardApp: App {
                         )
                     }
                 }
+                .onOpenURL { url in
+                    // Handle direct app sharing (when user shares TO the Clipboard app)
+                    print("📱 Direct app sharing received URL: \(url.absoluteString)")
+                    NotificationCenter.default.post(
+                        name: NSNotification.Name("AddSharedURL"),
+                        object: nil,
+                        userInfo: ["url": url.absoluteString]
+                    )
+                }
         }
         .modelContainer(sharedModelContainer)
     }
