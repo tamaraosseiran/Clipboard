@@ -32,7 +32,7 @@ struct ContentView: View {
         
         return filtered.sorted { $0.createdAt > $1.createdAt }
     }
-    
+
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
@@ -446,7 +446,7 @@ struct ListView: View {
         }
         .listStyle(InsetGroupedListStyle())
     }
-    
+
     private func deleteItems(offsets: IndexSet) {
         withAnimation {
             for index in offsets {

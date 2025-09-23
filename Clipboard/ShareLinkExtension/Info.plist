@@ -20,6 +20,8 @@
 	<string>1</string>
 	<key>NSExtensionDescription</key>
 	<string>Save links and content to your personal clipboard for easy organization</string>
+	<key>NSExtensionIconName</key>
+	<string>ShareLinkExtensionIcon</string>
 	<key>NSExtension</key>
 	<dict>
 		<key>NSExtensionAttributes</key>
@@ -27,6 +29,12 @@
 			<key>NSExtensionActivationRule</key>
 			<dict>
 				<key>NSExtensionActivationSupportsWebURLWithMaxCount</key>
+				<integer>1</integer>
+				<key>NSExtensionActivationSupportsText</key>
+				<true/>
+				<key>NSExtensionActivationSupportsImageWithMaxCount</key>
+				<integer>1</integer>
+				<key>NSExtensionActivationSupportsMovieWithMaxCount</key>
 				<integer>1</integer>
 			</dict>
 		</dict>
