@@ -20,45 +20,27 @@ final class ShareViewController: SLComposeServiceViewController {
         // Called after the user taps Post
         print("📤 ShareLinkExtension: didSelectPost called.")
         
-        // Show user feedback
-        let alert = UIAlertController(title: "Share Extension", message: "Processing shared content...", preferredStyle: .alert)
-        present(alert, animated: true)
-        
-        handleIncomingItems { [weak self] in
-            print("✅ ShareLinkExtension: Request completed.")
-            alert.dismiss(animated: true) {
-                self?.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
-            }
-        }
-    }
-
-    override func configurationItems() -> [Any]! {
-        // No extra configuration items in the sheet
-        return []
-    }
-
-    private func handleIncomingItems(completion: @escaping () -> Void) {
-        print("🔍 ShareLinkExtension: Handling incoming items...")
+        // Process items immediately without complex UI
         guard let items = extensionContext?.inputItems as? [NSExtensionItem] else {
             print("❌ ShareLinkExtension: No input items found.")
-            completion()
+            extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
             return
         }
 
         let providers = items.flatMap { $0.attachments ?? [] }
         if providers.isEmpty {
             print("❌ ShareLinkExtension: No attachments found.")
-            completion()
+            extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
             return
         }
 
-        let group = DispatchGroup()
         var collectedURLs: [URL] = []
+        let group = DispatchGroup()
 
         for provider in providers {
             if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
                 group.enter()
-                provider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { item, _ in
+                provider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { item, error in
                     defer { group.leave() }
                     if let url = item as? URL {
                         print("🔗 ShareLinkExtension: Found URL: \(url.absoluteString)")
@@ -70,13 +52,11 @@ final class ShareViewController: SLComposeServiceViewController {
                 }
             } else if provider.hasItemConformingToTypeIdentifier(UTType.text.identifier) {
                 group.enter()
-                provider.loadItem(forTypeIdentifier: UTType.text.identifier, options: nil) { item, _ in
+                provider.loadItem(forTypeIdentifier: UTType.text.identifier, options: nil) { item, error in
                     defer { group.leave() }
                     if let text = item as? String, let detected = Self.firstURL(in: text) {
                         print("📝 ShareLinkExtension: Found text with URL: \(detected.absoluteString)")
                         collectedURLs.append(detected)
-                    } else if let text = item as? String {
-                        print("📝 ShareLinkExtension: Found text, no URL detected: \(text)")
                     }
                 }
             }
@@ -84,17 +64,16 @@ final class ShareViewController: SLComposeServiceViewController {
 
         group.notify(queue: .main) {
             print("📦 ShareLinkExtension: Collected \(collectedURLs.count) URLs. Saving to inbox.")
-            
-            // Show user feedback about what was found
-            let message = collectedURLs.isEmpty ? "No URLs found" : "Found \(collectedURLs.count) URL(s): \(collectedURLs.map { $0.absoluteString }.joined(separator: ", "))"
-            let alert = UIAlertController(title: "URLs Found", message: message, preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "OK", style: .default))
-            self.present(alert, animated: true)
-            
             self.saveToInbox(collectedURLs)
-            completion()
+            self.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
         }
     }
+
+    override func configurationItems() -> [Any]! {
+        // No extra configuration items in the sheet
+        return []
+    }
+
 
     private func saveToInbox(_ urls: [URL]) {
         guard !urls.isEmpty else {
@@ -111,11 +90,6 @@ final class ShareViewController: SLComposeServiceViewController {
         defaults.set(inbox, forKey: "SharedURLInbox")
         defaults.synchronize()
         print("✅ ShareLinkExtension: Saved \(urls.count) URLs to inbox. Current inbox count: \(inbox.count)")
-        
-        // Show final confirmation
-        let finalAlert = UIAlertController(title: "Success", message: "Saved \(urls.count) URL(s) to Clipboard app!", preferredStyle: .alert)
-        finalAlert.addAction(UIAlertAction(title: "OK", style: .default))
-        self.present(finalAlert, animated: true)
     }
 
     private static func firstURL(in text: String) -> URL? {
@@ -128,3 +102,4 @@ final class ShareViewController: SLComposeServiceViewController {
         return nil
     }
 }
+
