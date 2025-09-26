@@ -22,7 +22,7 @@ struct ContentView: View {
     @State private var sharedURL: String?
     @State private var showingSharedContentPreview = false
     @State private var pendingSharedContent: SharedContentPreview?
-    @State private var sharedVideoContent: SharedVideoContent?
+    @State private var sharedContent: SharedContent?
     
     var filteredItems: [ContentItem] {
         var filtered = items
@@ -152,9 +152,9 @@ struct ContentView: View {
             }
         }
         .onAppear {
-            print("📱 ContentView appeared, checking for shared URLs...")
+            print("📱 ContentView appeared, checking for shared content...")
             checkAppGroupForSharedURLs()
-            checkAppGroupForSharedVideos()
+            checkAppGroupForSharedContent()
         }
     }
     
@@ -210,39 +210,58 @@ struct ContentView: View {
         showingSharedContentPreview = true
     }
     
-    private func checkAppGroupForSharedVideos() {
-        print("🎬 Checking App Group for shared videos...")
+    private func checkAppGroupForSharedContent() {
+        print("📱 Checking App Group for shared content...")
         guard let defaults = UserDefaults(suiteName: "group.com.tamaraosseiran.clipboard") else { 
             print("❌ Failed to access App Group UserDefaults")
             return 
         }
         
-        if let videoData = defaults.array(forKey: "SharedVideos") as? [Data], !videoData.isEmpty {
-            print("🎬 Found \(videoData.count) shared videos in inbox")
+        if let contentData = defaults.array(forKey: "SharedContent") as? [Data], !contentData.isEmpty {
+            print("📱 Found \(contentData.count) shared content items in inbox")
             
-            // Process the most recent video
-            if let latestVideoData = videoData.last,
-               let videoContent = try? JSONDecoder().decode(SharedVideoContent.self, from: latestVideoData) {
-                print("🎬 Processing latest video: \(videoContent.title)")
-                processSharedVideo(videoContent)
+            // Process the most recent content
+            if let latestContentData = contentData.last,
+               let content = try? JSONDecoder().decode(SharedContent.self, from: latestContentData) {
+                print("📱 Processing latest content: \(content.title)")
+                processSharedContent(content)
                 
-                // Clear the processed video from the inbox
-                let remainingVideos = Array(videoData.dropLast())
-                defaults.set(remainingVideos, forKey: "SharedVideos")
+                // Clear the processed content from the inbox
+                let remainingContent = Array(contentData.dropLast())
+                defaults.set(remainingContent, forKey: "SharedContent")
                 defaults.synchronize()
             }
         }
     }
     
-    private func processSharedVideo(_ videoContent: SharedVideoContent) {
-        print("🎬 Processing shared video: \(videoContent.title)")
+    private func processSharedContent(_ content: SharedContent) {
+        print("📱 Processing shared content: \(content.title)")
         
-        // Create a preview for the video content
+        // Determine content type based on the source
+        let contentType: ContentType
+        switch content.contentType.lowercased() {
+        case "video", "tiktok", "instagram":
+            contentType = .other // User can change this
+        case "restaurant", "yelp", "google maps":
+            contentType = .restaurant
+        case "place", "location":
+            contentType = .place
+        case "recipe", "cooking":
+            contentType = .recipe
+        case "shop", "store":
+            contentType = .shop
+        case "activity", "event":
+            contentType = .activity
+        default:
+            contentType = .other
+        }
+        
+        // Create a preview for the content
         let preview = SharedContentPreview(
-            originalURL: videoContent.url,
-            title: videoContent.title,
-            description: videoContent.description,
-            contentType: .other, // Default to other, user can change
+            originalURL: content.url,
+            title: content.title,
+            description: content.description,
+            contentType: contentType,
             detectedLocation: nil, // Will be detected from description
             tags: []
         )
