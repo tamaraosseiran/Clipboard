@@ -11,8 +11,14 @@ import UniformTypeIdentifiers
 
 final class ShareViewController: SLComposeServiceViewController {
 
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        print("📤 ShareLinkExtension: viewDidLoad called - extension is loading!")
+    }
+
     override func isContentValid() -> Bool {
         // Content is considered valid; we handle extraction in didSelectPost
+        print("📤 ShareLinkExtension: isContentValid called")
         return true
     }
 
