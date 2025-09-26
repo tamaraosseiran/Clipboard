@@ -135,6 +135,18 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("AddSharedURL"))) { notification in
             if let url = notification.userInfo?["url"] as? String {
                 print("📱 Received shared URL via NotificationCenter: \(url)")
+                
+                // Show a simple alert to confirm the URL was received
+                DispatchQueue.main.async {
+                    // You can remove this alert later, it's just for debugging
+                    let alert = UIAlertController(title: "URL Received!", message: "Received: \(url)", preferredStyle: .alert)
+                    alert.addAction(UIAlertAction(title: "OK", style: .default))
+                    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                       let window = windowScene.windows.first {
+                        window.rootViewController?.present(alert, animated: true)
+                    }
+                }
+                
                 processSharedURL(url)
             }
         }
