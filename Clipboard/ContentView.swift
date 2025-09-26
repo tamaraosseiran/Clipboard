@@ -22,6 +22,7 @@ struct ContentView: View {
     @State private var sharedURL: String?
     @State private var showingSharedContentPreview = false
     @State private var pendingSharedContent: SharedContentPreview?
+    @State private var sharedVideoContent: SharedVideoContent?
     
     var filteredItems: [ContentItem] {
         var filtered = items
@@ -153,6 +154,7 @@ struct ContentView: View {
         .onAppear {
             print("📱 ContentView appeared, checking for shared URLs...")
             checkAppGroupForSharedURLs()
+            checkAppGroupForSharedVideos()
         }
     }
     
@@ -201,6 +203,48 @@ struct ContentView: View {
             contentType: parsedURL.contentType,
             detectedLocation: parsedURL.detectedLocation,
             tags: parsedURL.tags
+        )
+        
+        // Show the preview for user validation
+        pendingSharedContent = preview
+        showingSharedContentPreview = true
+    }
+    
+    private func checkAppGroupForSharedVideos() {
+        print("🎬 Checking App Group for shared videos...")
+        guard let defaults = UserDefaults(suiteName: "group.com.tamaraosseiran.clipboard") else { 
+            print("❌ Failed to access App Group UserDefaults")
+            return 
+        }
+        
+        if let videoData = defaults.array(forKey: "SharedVideos") as? [Data], !videoData.isEmpty {
+            print("🎬 Found \(videoData.count) shared videos in inbox")
+            
+            // Process the most recent video
+            if let latestVideoData = videoData.last,
+               let videoContent = try? JSONDecoder().decode(SharedVideoContent.self, from: latestVideoData) {
+                print("🎬 Processing latest video: \(videoContent.title)")
+                processSharedVideo(videoContent)
+                
+                // Clear the processed video from the inbox
+                let remainingVideos = Array(videoData.dropLast())
+                defaults.set(remainingVideos, forKey: "SharedVideos")
+                defaults.synchronize()
+            }
+        }
+    }
+    
+    private func processSharedVideo(_ videoContent: SharedVideoContent) {
+        print("🎬 Processing shared video: \(videoContent.title)")
+        
+        // Create a preview for the video content
+        let preview = SharedContentPreview(
+            originalURL: videoContent.url,
+            title: videoContent.title,
+            description: videoContent.description,
+            contentType: .other, // Default to other, user can change
+            detectedLocation: nil, // Will be detected from description
+            tags: []
         )
         
         // Show the preview for user validation
