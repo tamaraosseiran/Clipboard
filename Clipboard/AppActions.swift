@@ -42,10 +42,10 @@ struct SaveToSpotsIntent: AppIntent {
             
             // Save to UserDefaults for the main app to pick up
             if let defaults = UserDefaults(suiteName: "group.com.tamaraosseiran.clipboard") {
-                var sharedContent = defaults.array(forKey: "SharedContent") as? [Data] ?? []
+                var sharedContentArray = defaults.array(forKey: "SharedContent") as? [Data] ?? []
                 if let data = try? JSONEncoder().encode(sharedContent) {
-                    sharedContent.append(data)
-                    defaults.set(sharedContent, forKey: "SharedContent")
+                    sharedContentArray.append(data)
+                    defaults.set(sharedContentArray, forKey: "SharedContent")
                     defaults.synchronize()
                     print("✅ Saved shared content to App Group")
                 }
