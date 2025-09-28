@@ -42,14 +42,12 @@ final class ShareViewController: SLComposeServiceViewController {
         // Called after the user taps Post
         print("📤 ShareLinkExtension: didSelectPost called.")
         
-        // Add error handling to prevent crashes
-        do {
-            // Process items immediately without complex UI
-            guard let items = extensionContext?.inputItems as? [NSExtensionItem] else {
-                print("❌ ShareLinkExtension: No input items found.")
-                extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
-                return
-            }
+        // Process items immediately without complex UI
+        guard let items = extensionContext?.inputItems as? [NSExtensionItem] else {
+            print("❌ ShareLinkExtension: No input items found.")
+            extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
+            return
+        }
 
         let providers = items.flatMap { $0.attachments ?? [] }
         if providers.isEmpty {
@@ -86,14 +84,10 @@ final class ShareViewController: SLComposeServiceViewController {
             }
         }
 
-            group.notify(queue: .main) {
-                print("📦 ShareLinkExtension: Collected \(collectedURLs.count) URLs. Saving to inbox.")
-                self.saveToInbox(collectedURLs)
-                self.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
-            }
-        } catch {
-            print("❌ ShareLinkExtension: Error in didSelectPost: \(error)")
-            extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
+        group.notify(queue: .main) {
+            print("📦 ShareLinkExtension: Collected \(collectedURLs.count) URLs. Saving to inbox.")
+            self.saveToInbox(collectedURLs)
+            self.extensionContext?.completeRequest(returningItems: [], completionHandler: nil)
         }
     }
 
@@ -104,24 +98,20 @@ final class ShareViewController: SLComposeServiceViewController {
 
 
     private func saveToInbox(_ urls: [URL]) {
-        do {
-            guard !urls.isEmpty else {
-                print("⚠️ ShareLinkExtension: No URLs to save to inbox.")
-                return
-            }
-            guard let defaults = UserDefaults(suiteName: "group.com.tamaraosseiran.clipboard") else {
-                print("❌ ShareLinkExtension: Failed to get UserDefaults for App Group.")
-                return
-            }
-
-            var inbox = defaults.array(forKey: "SharedURLInbox") as? [String] ?? []
-            inbox.append(contentsOf: urls.map { $0.absoluteString })
-            defaults.set(inbox, forKey: "SharedURLInbox")
-            defaults.synchronize()
-            print("✅ ShareLinkExtension: Saved \(urls.count) URLs to inbox. Current inbox count: \(inbox.count)")
-        } catch {
-            print("❌ ShareLinkExtension: Error saving to inbox: \(error)")
+        guard !urls.isEmpty else {
+            print("⚠️ ShareLinkExtension: No URLs to save to inbox.")
+            return
         }
+        guard let defaults = UserDefaults(suiteName: "group.com.tamaraosseiran.clipboard") else {
+            print("❌ ShareLinkExtension: Failed to get UserDefaults for App Group.")
+            return
+        }
+
+        var inbox = defaults.array(forKey: "SharedURLInbox") as? [String] ?? []
+        inbox.append(contentsOf: urls.map { $0.absoluteString })
+        defaults.set(inbox, forKey: "SharedURLInbox")
+        defaults.synchronize()
+        print("✅ ShareLinkExtension: Saved \(urls.count) URLs to inbox. Current inbox count: \(inbox.count)")
     }
 
     private static func firstURL(in text: String) -> URL? {
