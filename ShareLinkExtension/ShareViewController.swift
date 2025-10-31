@@ -8,14 +8,44 @@ final class ShareViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        print("🔵 [ShareViewController] viewDidLoad called")
         log.info("Share extension launched.")
         
-        let vc = UIHostingController(rootView: ShareRootView(context: self.extensionContext, logger: log))
-        addChild(vc)
-        vc.view.frame = view.bounds
-        vc.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        view.addSubview(vc.view)
-        vc.didMove(toParent: self)
+        // Set background color so we can see the view
+        view.backgroundColor = .systemBackground
+        
+        // Create and add SwiftUI view immediately
+        let rootView = ShareRootView(context: self.extensionContext, logger: log)
+        let hostingController = UIHostingController(rootView: rootView)
+        
+        // Add as child view controller
+        addChild(hostingController)
+        hostingController.view.translatesAutoresizingMaskIntoConstraints = false
+        hostingController.view.backgroundColor = .systemBackground
+        view.addSubview(hostingController.view)
+        
+        NSLayoutConstraint.activate([
+            hostingController.view.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            hostingController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            hostingController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            hostingController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+        
+        hostingController.didMove(toParent: self)
+        
+        print("🔵 [ShareViewController] SwiftUI view added, view frame: \(view.frame)")
+        log.info("SwiftUI view added to ShareViewController, frame: \(view.frame)")
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        print("🔵 [ShareViewController] viewWillAppear called")
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        print("🔵 [ShareViewController] viewDidAppear called, frame: \(view.frame)")
+        log.info("ShareViewController viewDidAppear called, frame: \(view.frame)")
     }
 }
 
@@ -37,7 +67,12 @@ struct ShareRootView: View {
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .onAppear { parse() }
+                .background(Color(.systemBackground))
+                .onAppear {
+                    print("🔵 [ShareRootView] Loading view appeared, starting parse")
+                    logger.info("Loading view appeared, starting parse")
+                    parse()
+                }
                 
             case .filled:
                 NavigationView {
@@ -108,6 +143,8 @@ struct ShareRootView: View {
                     .buttonStyle(.bordered)
                 }
                 .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(.systemBackground))
             }
         }
     }
