@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SharePreviewData: Identifiable, Codable {
-    let id: UUID = UUID()
+    var id: UUID = UUID()
     var urlString: String
     var title: String
     var description: String

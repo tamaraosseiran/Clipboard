@@ -33,8 +33,8 @@ final class ShareViewController: UIViewController {
         
         hostingController.didMove(toParent: self)
         
-        print("🔵 [ShareViewController] SwiftUI view added, view frame: \(view.frame)")
-        log.info("SwiftUI view added to ShareViewController, frame: \(view.frame)")
+        print("🔵 [ShareViewController] SwiftUI view added, view frame: \(view.frame.debugDescription)")
+        log.info("SwiftUI view added to ShareViewController")
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -44,8 +44,8 @@ final class ShareViewController: UIViewController {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        print("🔵 [ShareViewController] viewDidAppear called, frame: \(view.frame)")
-        log.info("ShareViewController viewDidAppear called, frame: \(view.frame)")
+        print("🔵 [ShareViewController] viewDidAppear called, frame: \(view.frame.debugDescription)")
+        log.info("ShareViewController viewDidAppear called")
     }
 }
 
@@ -78,8 +78,14 @@ struct ShareRootView: View {
                 NavigationView {
                     Form {
                         Section(header: Text("Details")) {
-                            TextField("Name", text: Binding($draft.name, default: ""))
-                            TextField("Address", text: Binding($draft.address, default: ""))
+                            TextField("Name", text: Binding(
+                                get: { draft.name ?? "" },
+                                set: { draft.name = $0.isEmpty ? nil : $0 }
+                            ))
+                            TextField("Address", text: Binding(
+                                get: { draft.address ?? "" },
+                                set: { draft.address = $0.isEmpty ? nil : $0 }
+                            ))
                             if let url = draft.sourceURL {
                                 HStack {
                                     Text("Source")
@@ -199,12 +205,5 @@ struct ShareRootView: View {
     }
 }
 
-private extension Binding where Value == String? {
-    init(_ source: Binding<String?>, default defaultValue: String) {
-        self.init(
-            get: { source.wrappedValue ?? defaultValue },
-            set: { source.wrappedValue = $0.isEmpty ? nil : $0 }
-        )
-    }
-}
+// Removed unused Binding extension
 
