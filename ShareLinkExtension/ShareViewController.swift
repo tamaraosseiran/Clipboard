@@ -14,6 +14,12 @@ final class ShareViewController: UIViewController {
         // Set background color so we can see the view
         view.backgroundColor = .systemBackground
         
+        // Ensure view has a valid frame
+        if view.frame.isEmpty {
+            view.frame = UIScreen.main.bounds
+            print("🔵 [ShareViewController] Set view frame to screen bounds")
+        }
+        
         // Create and add SwiftUI view immediately
         let rootView = ShareRootView(context: self.extensionContext, logger: log)
         let hostingController = UIHostingController(rootView: rootView)
@@ -25,7 +31,7 @@ final class ShareViewController: UIViewController {
         view.addSubview(hostingController.view)
         
         NSLayoutConstraint.activate([
-            hostingController.view.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            hostingController.view.topAnchor.constraint(equalTo: view.topAnchor),
             hostingController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             hostingController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             hostingController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
@@ -35,6 +41,14 @@ final class ShareViewController: UIViewController {
         
         print("🔵 [ShareViewController] SwiftUI view added, view frame: \(view.frame.debugDescription)")
         log.info("SwiftUI view added to ShareViewController")
+    }
+    
+    override func viewWillLayoutSubviews() {
+        super.viewWillLayoutSubviews()
+        // Ensure child view controller fills the view
+        if let hostingVC = children.first as? UIHostingController<ShareRootView> {
+            hostingVC.view.frame = view.bounds
+        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
