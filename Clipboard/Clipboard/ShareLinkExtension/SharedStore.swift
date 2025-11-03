@@ -1,5 +1,6 @@
 import Foundation
 
+// SharedStore for ShareLinkExtension - full implementation with savePending
 struct SharedStore {
     private let suite = "group.com.tamaraosseiran.clipboard"
     private let key = "pending_spot"

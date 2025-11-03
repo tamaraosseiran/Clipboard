@@ -547,7 +547,10 @@ struct SharedContentPreviewView: View {
                             detectedLocation: editedLocation.isEmpty ? nil : Location(
                                 latitude: content.detectedLocation?.latitude ?? 0,
                                 longitude: content.detectedLocation?.longitude ?? 0,
-                                address: editedLocation
+                                address: editedLocation,
+                                city: nil,
+                                state: nil,
+                                country: nil
                             ),
                             tags: content.tags
                         )

@@ -1,6 +1,7 @@
 import Foundation
 
-// Simplified SharedStore for main app - only needs to read, not write
+// SharedStore for main app - only needs read/clear, not write
+// The extension version has savePending() with ParsedSpotDraft dependency
 struct SharedStore {
     private let suite = "group.com.tamaraosseiran.clipboard"
     private let key = "pending_spot"
@@ -37,3 +38,4 @@ struct SharedStore {
         UserDefaults(suiteName: suite)?.synchronize()
     }
 }
+
