@@ -1,0 +1,4 @@
+Target dependency graph (2 targets)
+Target 'Clipboard' in project 'Clipboard'
+➜ Explicit dependency on target 'ShareLinkExtension' in project 'Clipboard'
+Target 'ShareLinkExtension' in project 'Clipboard' (no dependencies)

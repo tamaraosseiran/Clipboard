@@ -1,0 +1,51 @@
+{
+  "" : {
+    "const-values" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/Clipboard-primary.swiftconstvalues",
+    "dependencies" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/Clipboard-primary.d",
+    "diagnostics" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/Clipboard-primary.dia",
+    "emit-module-dependencies" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/Clipboard-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/Clipboard-primary-emit-module.dia",
+    "pch" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/Clipboard-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/Clipboard-primary.swiftdeps"
+  },
+  "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/Clipboard/AddItemView.swift" : {
+    "index-unit-output-path" : "/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/AddItemView.o",
+    "llvm-bc" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/AddItemView.bc",
+    "object" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/AddItemView.o"
+  },
+  "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/Clipboard/CategoryViews.swift" : {
+    "index-unit-output-path" : "/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/CategoryViews.o",
+    "llvm-bc" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/CategoryViews.bc",
+    "object" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/CategoryViews.o"
+  },
+  "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/Clipboard/ClipboardApp.swift" : {
+    "index-unit-output-path" : "/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/ClipboardApp.o",
+    "llvm-bc" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/ClipboardApp.bc",
+    "object" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/ClipboardApp.o"
+  },
+  "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/Clipboard/ContentView.swift" : {
+    "index-unit-output-path" : "/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/ContentView.o",
+    "llvm-bc" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/ContentView.bc",
+    "object" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/ContentView.o"
+  },
+  "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/Clipboard/Item.swift" : {
+    "index-unit-output-path" : "/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/Item.o",
+    "llvm-bc" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/Item.bc",
+    "object" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/Item.o"
+  },
+  "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/Clipboard/ItemDetailView.swift" : {
+    "index-unit-output-path" : "/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/ItemDetailView.o",
+    "llvm-bc" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/ItemDetailView.bc",
+    "object" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/ItemDetailView.o"
+  },
+  "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/Clipboard/URLParser.swift" : {
+    "index-unit-output-path" : "/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/URLParser.o",
+    "llvm-bc" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/URLParser.bc",
+    "object" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/URLParser.o"
+  },
+  "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "index-unit-output-path" : "/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/GeneratedAssetSymbols.o"
+  }
+}

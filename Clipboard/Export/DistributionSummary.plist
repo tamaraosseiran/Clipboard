@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Clipboard.ipa</key>
+	<array>
+		<dict>
+			<key>architectures</key>
+			<array>
+				<string>arm64</string>
+			</array>
+			<key>certificate</key>
+			<dict>
+				<key>SHA1</key>
+				<string>D1618C75E77F776FDAFD827B6A58165AABB3220C</string>
+				<key>dateExpires</key>
+				<string>9/6/26</string>
+				<key>type</key>
+				<string>Cloud Managed Apple Distribution</string>
+			</dict>
+			<key>name</key>
+			<string>Clipboard</string>
+			<key>symbols</key>
+			<true/>
+			<key>team</key>
+			<dict>
+				<key>id</key>
+				<string>4J6264AA5S</string>
+				<key>name</key>
+				<string></string>
+			</dict>
+		</dict>
+		<dict>
+			<key>architectures</key>
+			<array>
+				<string>arm64</string>
+			</array>
+			<key>buildNumber</key>
+			<string>29</string>
+			<key>certificate</key>
+			<dict>
+				<key>SHA1</key>
+				<string>D1618C75E77F776FDAFD827B6A58165AABB3220C</string>
+				<key>dateExpires</key>
+				<string>9/6/26</string>
+				<key>type</key>
+				<string>Cloud Managed Apple Distribution</string>
+			</dict>
+			<key>entitlements</key>
+			<dict>
+				<key>application-identifier</key>
+				<string>4J6264AA5S.com.tamaraosseiran.Clipboard.ShareLinkExtension</string>
+				<key>beta-reports-active</key>
+				<true/>
+				<key>com.apple.developer.team-identifier</key>
+				<string>4J6264AA5S</string>
+				<key>com.apple.security.application-groups</key>
+				<array>
+					<string>group.com.tamaraosseiran.clipboard</string>
+				</array>
+				<key>get-task-allow</key>
+				<false/>
+			</dict>
+			<key>name</key>
+			<string>ShareLinkExtension.appex</string>
+			<key>profile</key>
+			<dict>
+				<key>UUID</key>
+				<string>62783a01-a7f0-471e-a818-52b5e4e51e72</string>
+				<key>dateExpires</key>
+				<string>9/6/26</string>
+				<key>name</key>
+				<string>iOS Team Store Provisioning Profile: com.tamaraosseiran.Clipboard.ShareLinkExtension</string>
+			</dict>
+			<key>symbols</key>
+			<true/>
+			<key>team</key>
+			<dict>
+				<key>id</key>
+				<string>4J6264AA5S</string>
+				<key>name</key>
+				<string></string>
+			</dict>
+			<key>versionNumber</key>
+			<string>1.0</string>
+		</dict>
+	</array>
+</dict>
+</plist>

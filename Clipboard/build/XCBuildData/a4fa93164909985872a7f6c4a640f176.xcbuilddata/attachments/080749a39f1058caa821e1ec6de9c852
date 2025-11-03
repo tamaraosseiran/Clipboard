@@ -1,0 +1,21 @@
+{
+  "" : {
+    "const-values" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/ShareLinkExtension.build/Objects-normal/arm64/ShareLinkExtension-primary.swiftconstvalues",
+    "dependencies" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/ShareLinkExtension.build/Objects-normal/arm64/ShareLinkExtension-primary.d",
+    "diagnostics" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/ShareLinkExtension.build/Objects-normal/arm64/ShareLinkExtension-primary.dia",
+    "emit-module-dependencies" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/ShareLinkExtension.build/Objects-normal/arm64/ShareLinkExtension-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/ShareLinkExtension.build/Objects-normal/arm64/ShareLinkExtension-primary-emit-module.dia",
+    "pch" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/ShareLinkExtension.build/Objects-normal/arm64/ShareLinkExtension-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/ShareLinkExtension.build/Objects-normal/arm64/ShareLinkExtension-primary.swiftdeps"
+  },
+  "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/Clipboard.xcodeproj/AppGroupIdentifier.swift" : {
+    "index-unit-output-path" : "/Clipboard.build/Release-iphoneos/ShareLinkExtension.build/Objects-normal/arm64/AppGroupIdentifier.o",
+    "llvm-bc" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/ShareLinkExtension.build/Objects-normal/arm64/AppGroupIdentifier.bc",
+    "object" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/ShareLinkExtension.build/Objects-normal/arm64/AppGroupIdentifier.o"
+  },
+  "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/ShareLinkExtension/ShareViewController.swift" : {
+    "index-unit-output-path" : "/Clipboard.build/Release-iphoneos/ShareLinkExtension.build/Objects-normal/arm64/ShareViewController.o",
+    "llvm-bc" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/ShareLinkExtension.build/Objects-normal/arm64/ShareViewController.bc",
+    "object" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/ShareLinkExtension.build/Objects-normal/arm64/ShareViewController.o"
+  }
+}

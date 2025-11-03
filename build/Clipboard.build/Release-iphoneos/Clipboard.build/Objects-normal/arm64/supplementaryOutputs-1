@@ -1,0 +1,12 @@
+{
+  "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/Clipboard/AddItemView.swift" : {
+    "abi-baseline-json" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/Clipboard.abi.json",
+    "const-values" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/Clipboard-primary.swiftconstvalues",
+    "dependencies" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/Clipboard-primary.d",
+    "diagnostics" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/Clipboard-primary.dia",
+    "objc-header" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/Clipboard-Swift.h",
+    "swiftdoc" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/Clipboard.swiftdoc",
+    "swiftmodule" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/Clipboard.swiftmodule",
+    "swiftsourceinfo" : "/Users/tamaraosseiran/Projects/Clipboard/Clipboard/build/Clipboard.build/Release-iphoneos/Clipboard.build/Objects-normal/arm64/Clipboard.swiftsourceinfo"
+  }
+}
