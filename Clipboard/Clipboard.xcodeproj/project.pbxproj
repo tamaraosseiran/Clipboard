@@ -62,6 +62,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				ShareLinkExtension,
 			);
 			target = 016547732E62440700C46AD8 /* Clipboard */;
 		};
