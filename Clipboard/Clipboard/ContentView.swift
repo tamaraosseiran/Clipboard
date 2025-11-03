@@ -237,7 +237,7 @@ struct ContentView: View {
     
     private func checkForPendingSpot() {
         print("📱 Checking for pending spot from Share Extension...")
-        guard let pending = SharedStore().loadPending() else {
+        guard let pending = AppGroupStore().loadPending() else {
             print("📱 No pending spot found")
             return
         }
@@ -286,7 +286,7 @@ struct ContentView: View {
         }
         
         // Clear the pending spot
-        SharedStore().clearPending()
+        AppGroupStore().clearPending()
         print("📱 Cleared pending spot")
     }
     

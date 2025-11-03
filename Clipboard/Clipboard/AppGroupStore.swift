@@ -1,8 +1,8 @@
 import Foundation
 
-// SharedStore for main app - only needs read/clear, not write
-// The extension version has savePending() with ParsedSpotDraft dependency
-struct SharedStore {
+// AppGroupStore for main app - only needs read/clear, not write
+// The extension version (SharedStore) has savePending() with ParsedSpotDraft dependency
+struct AppGroupStore {
     private let suite = "group.com.tamaraosseiran.clipboard"
     private let key = "pending_spot"
     
