@@ -651,10 +651,9 @@ struct MapView: View {
                     Button(action: {
                         centerOnUserLocation()
                     }) {
-                        Image(systemName: "location.north.line.fill")
+                        Image(systemName: "paperplane.fill")
                             .font(.title3)
                             .foregroundColor(.primary)
-                            .rotationEffect(.degrees(45))
                             .frame(width: 44, height: 44)
                             .background(Color(.systemBackground))
                             .clipShape(RoundedRectangle(cornerRadius: 8))
