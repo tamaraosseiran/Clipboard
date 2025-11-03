@@ -912,7 +912,12 @@ struct BottomSheetItemRow: View {
                         if !item.tags.isEmpty {
                             ForEach(item.tags.prefix(2), id: \.self) { tag in
                                 HStack(spacing: 4) {
-                                    if tag.lowercased().contains("matcha") || tag.lowercased().contains("tea") {
+                                    // Match tag names to appropriate icons
+                                    let tagLower = tag.lowercased()
+                                    if tagLower.contains("matcha") || tagLower.contains("tea") {
+                                        Image(systemName: "cup.and.saucer.fill")
+                                            .font(.caption2)
+                                    } else if tagLower.contains("coffee") {
                                         Image(systemName: "cup.and.saucer.fill")
                                             .font(.caption2)
                                     } else {
@@ -937,17 +942,9 @@ struct BottomSheetItemRow: View {
                         
                         // Content type tag with icon
                         HStack(spacing: 4) {
-                            if item.contentTypeEnum == .restaurant {
-                                Image(systemName: "cup.and.saucer.fill")
-                                    .font(.caption2)
-                            } else if item.contentTypeEnum == .shop {
-                                Image(systemName: "bag.fill")
-                                    .font(.caption2)
-                            } else {
-                                Image(systemName: "mappin.circle.fill")
-                                    .font(.caption2)
-                            }
-                            Text(item.contentTypeEnum.rawValue)
+                            Image(systemName: iconForContentType(item.contentTypeEnum))
+                                .font(.caption2)
+                            Text(item.contentTypeEnum == .restaurant ? "Coffee Shop" : item.contentTypeEnum.rawValue)
                                 .font(.caption2)
                         }
                         .padding(.horizontal, 8)
@@ -970,6 +967,17 @@ struct BottomSheetItemRow: View {
             .cornerRadius(12)
         }
         .buttonStyle(PlainButtonStyle())
+    }
+    
+    private func iconForContentType(_ type: ContentType) -> String {
+        switch type {
+        case .restaurant:
+            return "cup.and.saucer.fill"
+        case .shop:
+            return "bag.fill"
+        default:
+            return "mappin.circle.fill"
+        }
     }
 }
 
