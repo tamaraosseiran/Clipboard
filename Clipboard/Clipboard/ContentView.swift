@@ -245,7 +245,7 @@ struct ContentView: View {
         print("📱 Found pending spot: \(pending.name ?? "Untitled")")
         
         // Convert PendingSpot to SharedContentPreview for the preview sheet
-        let (photoURLs, sourceURL) = pending.toURLs()
+        let (_, sourceURL) = pending.toURLs()
         
         // Create Location if we have coordinates
         var location: Location? = nil
