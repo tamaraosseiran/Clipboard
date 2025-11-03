@@ -65,7 +65,7 @@
 			);
 			target = 016547732E62440700C46AD8 /* Clipboard */;
 		};
-		01BF9F542E82031B00EDCF72 /* Exceptions for "ShareLinkExtension" folder in "ShareLinkExtension" target */ = {
+		01BF9F552E82031B00EDCF72 /* Exceptions for "ShareLinkExtension" folder in "ShareLinkExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -96,7 +96,7 @@
 		01BF9F422E81FC5C00EDCF72 /* ShareLinkExtension */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				01BF9F542E82031B00EDCF72 /* Exceptions for "ShareLinkExtension" folder in "ShareLinkExtension" target */,
+				01BF9F552E82031B00EDCF72 /* Exceptions for "ShareLinkExtension" folder in "ShareLinkExtension" target */,
 			);
 			path = ShareLinkExtension;
 			sourceTree = "<group>";
