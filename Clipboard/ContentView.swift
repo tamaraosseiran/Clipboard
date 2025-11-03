@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import MapKit
+import CoreLocation
 
 extension String: @retroactive Identifiable {
     public var id: String { self }
@@ -596,19 +597,81 @@ struct ItemRowView: View {
 // MARK: - Map View
 struct MapView: View {
     let items: [ContentItem]
-    @State private var region = MKCoordinateRegion(
+    @Environment(\.modelContext) private var modelContext
+    @StateObject private var locationManager = LocationManager()
+    
+    @State private var position: MapCameraPosition = .region(MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
         span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
-    )
+    ))
     @State private var selectedItem: ContentItem?
+    @State private var bottomSheetOffset: CGFloat = UIScreen.main.bounds.height * 0.5
+    @State private var bottomSheetHeight: CGFloat = UIScreen.main.bounds.height * 0.5
+    @State private var isDragging = false
     
     var body: some View {
-        Map(position: .constant(.region(region)), selection: $selectedItem) {
-            ForEach(itemsWithLocation) { item in
-                Annotation(item.title, coordinate: item.location!.coordinate) {
-                    CategoryPinView(item: item, selectedItem: $selectedItem)
+        ZStack {
+            Map(position: $position, selection: $selectedItem) {
+                // Show user location
+                if let userLocation = locationManager.location {
+                    Annotation("My Location", coordinate: userLocation.coordinate) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.blue)
+                                .frame(width: 12, height: 12)
+                            Circle()
+                                .stroke(Color.white, lineWidth: 3)
+                                .frame(width: 16, height: 16)
+                        }
+                    }
                 }
-                .tag(item)
+                
+                // Show saved items as dots
+                ForEach(itemsWithLocation) { item in
+                    Annotation(item.title, coordinate: item.location!.coordinate) {
+                        SimpleDotView(item: item)
+                    }
+                    .tag(item)
+                }
+            }
+            .mapControls {
+                MapCompass()
+                MapUserLocationButton()
+            }
+            .onTapGesture {
+                selectedItem = nil
+            }
+            
+            VStack {
+                Spacer()
+                
+                // Current Location Button
+                HStack {
+                    Spacer()
+                    Button(action: {
+                        centerOnUserLocation()
+                    }) {
+                        Image(systemName: "location.north.line.fill")
+                            .font(.title3)
+                            .foregroundColor(.primary)
+                            .rotationEffect(.degrees(45))
+                            .frame(width: 44, height: 44)
+                            .background(Color(.systemBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .shadow(radius: 4)
+                    }
+                    .padding(.trailing, 16)
+                    .padding(.bottom, max(bottomSheetOffset + 20, 20))
+                }
+                
+                // Bottom Sheet
+                BottomSheetView(
+                    items: itemsWithLocation,
+                    selectedItem: $selectedItem,
+                    offset: $bottomSheetOffset,
+                    height: $bottomSheetHeight,
+                    isDragging: $isDragging
+                )
             }
         }
         .sheet(item: $selectedItem) { item in
@@ -618,6 +681,296 @@ struct MapView: View {
     
     private var itemsWithLocation: [ContentItem] {
         items.filter { $0.location != nil }
+    }
+    
+    private func centerOnUserLocation() {
+        guard let userLocation = locationManager.location else {
+            locationManager.requestLocation()
+            return
+        }
+        
+        withAnimation {
+            position = .camera(MapCamera(
+                centerCoordinate: userLocation.coordinate,
+                distance: 2000,
+                heading: 0,
+                pitch: 0
+            ))
+        }
+    }
+}
+
+// MARK: - Location Manager
+class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
+    private let manager = CLLocationManager()
+    @Published var location: CLLocationCoordinate2D?
+    
+    override init() {
+        super.init()
+        manager.delegate = self
+        manager.desiredAccuracy = kCLLocationAccuracyBest
+        requestLocation()
+    }
+    
+    func requestLocation() {
+        guard manager.authorizationStatus != .denied else { return }
+        manager.requestWhenInUseAuthorization()
+        manager.requestLocation()
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        location = locations.first?.coordinate
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("Location error: \(error.localizedDescription)")
+    }
+    
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        if manager.authorizationStatus == .authorizedWhenInUse || manager.authorizationStatus == .authorizedAlways {
+            manager.requestLocation()
+        }
+    }
+}
+
+// MARK: - Simple Dot View
+struct SimpleDotView: View {
+    let item: ContentItem
+    
+    var body: some View {
+        Circle()
+            .fill(Color.gray)
+            .frame(width: 10, height: 10)
+            .overlay(
+                Circle()
+                    .stroke(Color.white, lineWidth: 2)
+                    .frame(width: 14, height: 14)
+            )
+    }
+}
+
+// MARK: - Bottom Sheet View
+struct BottomSheetView: View {
+    let items: [ContentItem]
+    @Binding var selectedItem: ContentItem?
+    @Binding var offset: CGFloat
+    @Binding var height: CGFloat
+    @Binding var isDragging: Bool
+    
+    @State private var dragOffset: CGFloat = 0
+    @State private var showingAddItem = false
+    @State private var selectedFilter: ContentType? = nil
+    
+    private let minHeight: CGFloat = 200
+    private let maxHeight: CGFloat = UIScreen.main.bounds.height * 0.9
+    
+    var filteredItems: [ContentItem] {
+        var filtered = items
+        
+        if let filter = selectedFilter {
+            filtered = filtered.filter { $0.contentTypeEnum == filter }
+        }
+        
+        return filtered.sorted { $0.createdAt > $1.createdAt }
+    }
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Drag handle
+            RoundedRectangle(cornerRadius: 3)
+                .fill(Color.secondary.opacity(0.3))
+                .frame(width: 40, height: 5)
+                .padding(.top, 8)
+            
+            // Header
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Spots")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                    Text("\(filteredItems.count) spots")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                // Filter button
+                Menu {
+                    Button("All Items") { selectedFilter = nil }
+                    ForEach(ContentType.allCases, id: \.self) { type in
+                        Button(type.rawValue) { selectedFilter = type }
+                    }
+                } label: {
+                    Image(systemName: "line.3.horizontal.decrease.circle")
+                        .font(.title2)
+                        .foregroundColor(.primary)
+                }
+                
+                // Add button
+                Button(action: { showingAddItem = true }) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(.blue)
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 12)
+            .padding(.bottom, 8)
+            
+            // List of items
+            ScrollView {
+                LazyVStack(spacing: 12) {
+                    ForEach(filteredItems) { item in
+                        BottomSheetItemRow(item: item, selectedItem: $selectedItem)
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                .padding(.bottom, 20)
+            }
+        }
+        .frame(height: height)
+        .background(
+            Color(.systemBackground)
+                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: -5)
+        )
+        .offset(y: offset + dragOffset)
+        .gesture(
+            DragGesture()
+                .onChanged { value in
+                    isDragging = true
+                    let newOffset = offset + value.translation.height
+                    
+                    // Constrain dragging
+                    if newOffset >= 0 && newOffset <= maxHeight - minHeight {
+                        dragOffset = value.translation.height
+                    }
+                }
+                .onEnded { value in
+                    isDragging = false
+                    let newOffset = offset + value.translation.height
+                    let threshold = (maxHeight - minHeight) / 2
+                    
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        if newOffset < threshold {
+                            // Snap to top
+                            offset = 0
+                            height = maxHeight
+                        } else {
+                            // Snap to middle
+                            offset = maxHeight - minHeight - 100
+                            height = minHeight + 100
+                        }
+                        dragOffset = 0
+                    }
+                }
+        )
+        .sheet(isPresented: $showingAddItem) {
+            AddItemView()
+        }
+    }
+}
+
+// MARK: - Bottom Sheet Item Row
+struct BottomSheetItemRow: View {
+    let item: ContentItem
+    @Binding var selectedItem: ContentItem?
+    
+    var body: some View {
+        Button(action: {
+            selectedItem = item
+        }) {
+            HStack(spacing: 12) {
+                // Placeholder for image
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color(.systemGray5))
+                    .frame(width: 60, height: 60)
+                    .overlay(
+                        Text(item.contentTypeEnum.icon)
+                            .font(.title2)
+                    )
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(item.title)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+                    
+                    if item.isVisited {
+                        Text("Last visited on \(item.createdAt, style: .date)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    } else {
+                        Text("Not visited")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    HStack(spacing: 8) {
+                        // Tags/Categories - show first 2 tags with icons
+                        if !item.tags.isEmpty {
+                            ForEach(item.tags.prefix(2), id: \.self) { tag in
+                                HStack(spacing: 4) {
+                                    if tag.lowercased().contains("matcha") || tag.lowercased().contains("tea") {
+                                        Image(systemName: "cup.and.saucer.fill")
+                                            .font(.caption2)
+                                    } else {
+                                        Image(systemName: "tag.fill")
+                                            .font(.caption2)
+                                    }
+                                    Text(tag)
+                                        .font(.caption2)
+                                }
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color.green.opacity(0.1))
+                                .foregroundColor(.green)
+                                .cornerRadius(8)
+                            }
+                            if item.tags.count > 2 {
+                                Text("+\(item.tags.count - 2)")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        
+                        // Content type tag with icon
+                        HStack(spacing: 4) {
+                            if item.contentTypeEnum == .restaurant {
+                                Image(systemName: "cup.and.saucer.fill")
+                                    .font(.caption2)
+                            } else if item.contentTypeEnum == .shop {
+                                Image(systemName: "bag.fill")
+                                    .font(.caption2)
+                            } else {
+                                Image(systemName: "mappin.circle.fill")
+                                    .font(.caption2)
+                            }
+                            Text(item.contentTypeEnum.rawValue)
+                                .font(.caption2)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.blue.opacity(0.1))
+                        .foregroundColor(.blue)
+                        .cornerRadius(8)
+                    }
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding(.vertical, 8)
+            .padding(.horizontal, 12)
+            .background(Color(.systemBackground))
+            .cornerRadius(12)
+        }
+        .buttonStyle(PlainButtonStyle())
     }
 }
 
