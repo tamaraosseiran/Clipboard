@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 import MapKit
 import CoreLocation
+import UserNotifications
 
 extension String: @retroactive Identifiable {
     public var id: String { self }
@@ -89,6 +90,26 @@ struct ContentView: View {
                             .foregroundColor(.blue)
                     }
                     
+                    // Refresh button (for checking shared content)
+                    Menu {
+                        Button(action: {
+                            print("🔄 Manual refresh triggered")
+                            checkForSharedContent()
+                        }) {
+                            Label("Check for Shared Content", systemImage: "arrow.clockwise")
+                        }
+                        
+                        Button(action: {
+                            testAppGroupAccess()
+                        }) {
+                            Label("Test App Group", systemImage: "wrench.and.screwdriver")
+                        }
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.title)
+                            .foregroundColor(.blue)
+                    }
+                    
                     // Add button
                     Button(action: { showingAddItem = true }) {
                         Image(systemName: "plus.circle.fill")
@@ -154,10 +175,80 @@ struct ContentView: View {
         }
         .onAppear {
             print("📱 ContentView appeared, checking for shared content...")
-            checkAppGroupForSharedURLs()
-            checkAppGroupForSharedContent()
-            checkForPendingSpot()
+            checkForSharedContent()
+            setupNotificationObserver()
         }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            print("📱 App entering foreground, checking for shared content...")
+            checkForSharedContent()
+        }
+    }
+    
+    private func setupNotificationObserver() {
+        // Listen for app becoming active
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [self] _ in
+            print("📱 App became active, checking for shared content...")
+            checkForSharedContent()
+        }
+        
+        // Listen for manual check request (from URL scheme)
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("CheckForSharedContent"),
+            object: nil,
+            queue: .main
+        ) { [self] _ in
+            print("📱 Manual check requested, checking for shared content...")
+            checkForSharedContent()
+        }
+    }
+    
+    private func testAppGroupAccess() {
+        print("🧪 [TEST] Testing App Group access...")
+        guard let defaults = UserDefaults(suiteName: "group.com.tamaraosseiran.clipboard") else {
+            print("❌ [TEST] FAILED: Cannot access App Group")
+            return
+        }
+        
+        print("✅ [TEST] App Group accessible")
+        
+        // Test write
+        let testKey = "test_key_\(Date().timeIntervalSince1970)"
+        defaults.set("test_value", forKey: testKey)
+        defaults.synchronize()
+        
+        // Test read
+        if let value = defaults.string(forKey: testKey) {
+            print("✅ [TEST] Write/Read successful: \(value)")
+            defaults.removeObject(forKey: testKey)
+        } else {
+            print("❌ [TEST] Read failed")
+        }
+        
+        // Check for pending spot
+        if let pending = AppGroupStore().loadPending() {
+            print("✅ [TEST] Found pending spot: \(pending.name ?? "Untitled")")
+        } else {
+            print("ℹ️ [TEST] No pending spot found")
+        }
+        
+        // Check timestamp
+        if let timestamp = defaults.double(forKey: "last_shared_timestamp") as Double?, timestamp > 0 {
+            let date = Date(timeIntervalSince1970: timestamp)
+            print("✅ [TEST] Last share timestamp: \(date)")
+        } else {
+            print("ℹ️ [TEST] No share timestamp found")
+        }
+    }
+    
+    private func checkForSharedContent() {
+        // Check all possible sources in order of priority
+        checkForPendingSpot()
+        checkAppGroupForSharedURLs()
+        checkAppGroupForSharedContent()
     }
     
     private func checkAppGroupForSharedURLs() {
@@ -237,20 +328,44 @@ struct ContentView: View {
     }
     
     private func checkForPendingSpot() {
-        print("📱 Checking for pending spot from Share Extension...")
-        guard let pending = AppGroupStore().loadPending() else {
-            print("📱 No pending spot found")
+        print("📱 [checkForPendingSpot] Checking for pending spot from Share Extension...")
+        
+        guard let defaults = UserDefaults(suiteName: "group.com.tamaraosseiran.clipboard") else {
+            print("❌ [checkForPendingSpot] Failed to access App Group UserDefaults")
+            print("❌ [checkForPendingSpot] App Group might not be configured correctly")
             return
         }
         
-        print("📱 Found pending spot: \(pending.name ?? "Untitled")")
+        // Debug: List all keys in App Group
+        print("🔍 [checkForPendingSpot] App Group accessible. Checking for keys...")
+        let allKeys = Array(defaults.dictionaryRepresentation().keys)
+        let relevantKeys = allKeys.filter { $0.contains("pending") || $0.contains("Shared") || $0.contains("spot") }
+        print("🔍 [checkForPendingSpot] Found keys: \(relevantKeys)")
+        
+        // Check if timestamp was set (indicates extension ran)
+        if let timestamp = defaults.double(forKey: "last_shared_timestamp") as Double?, timestamp > 0 {
+            let date = Date(timeIntervalSince1970: timestamp)
+            print("✅ [checkForPendingSpot] Extension ran at: \(date)")
+        } else {
+            print("⚠️ [checkForPendingSpot] No timestamp found - extension may not have run")
+        }
+        
+        guard let pending = AppGroupStore().loadPending() else {
+            print("📱 [checkForPendingSpot] No pending spot found in App Group")
+            print("💡 [checkForPendingSpot] Try sharing something from Safari to test")
+            return
+        }
+        
+        print("✅ [checkForPendingSpot] Found pending spot: \(pending.name ?? "Untitled")")
+        print("📱 [checkForPendingSpot] Address: \(pending.address ?? "none")")
+        print("📱 [checkForPendingSpot] Source URL: \(pending.sourceURL ?? "none")")
         
         // Convert PendingSpot to SharedContentPreview for the preview sheet
         let (_, sourceURL) = pending.toURLs()
         
         // Create Location if we have coordinates
         var location: Location? = nil
-        if let lat = pending.latitude, let lon = pending.longitude {
+        if let lat = pending.latitude, let lon = pending.longitude, lat != 0.0 || lon != 0.0 {
             location = Location(
                 latitude: lat,
                 longitude: lon,
@@ -259,6 +374,7 @@ struct ContentView: View {
                 state: nil,
                 country: nil
             )
+            print("📱 [checkForPendingSpot] Created location with coordinates: \(lat), \(lon)")
         } else if let address = pending.address, !address.isEmpty {
             // Create location with just address if no coordinates
             location = Location(
@@ -269,6 +385,7 @@ struct ContentView: View {
                 state: nil,
                 country: nil
             )
+            print("📱 [checkForPendingSpot] Created location with address only: \(address)")
         }
         
         let preview = SharedContentPreview(
@@ -282,13 +399,14 @@ struct ContentView: View {
         
         // Show the preview for user validation
         DispatchQueue.main.async {
+            print("📱 [checkForPendingSpot] Showing preview sheet")
             self.pendingSharedContent = preview
             self.showingSharedContentPreview = true
         }
         
-        // Clear the pending spot
+        // Clear the pending spot AFTER showing the preview
         AppGroupStore().clearPending()
-        print("📱 Cleared pending spot")
+        print("✅ [checkForPendingSpot] Cleared pending spot from App Group")
     }
     
     private func processSharedContent(_ content: SharedContent) {
@@ -776,26 +894,62 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         super.init()
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyBest
-        requestLocation()
+        
+        // Don't request immediately - wait for authorization
+        let status = manager.authorizationStatus
+        if status == .authorizedWhenInUse || status == .authorizedAlways {
+            manager.requestLocation()
+        } else if status == .notDetermined {
+            manager.requestWhenInUseAuthorization()
+        }
     }
     
     func requestLocation() {
-        guard manager.authorizationStatus != .denied else { return }
-        manager.requestWhenInUseAuthorization()
-        manager.requestLocation()
+        let status = manager.authorizationStatus
+        guard status != .denied && status != .restricted else {
+            print("⚠️ Location permission denied or restricted")
+            return
+        }
+        
+        if status == .notDetermined {
+            manager.requestWhenInUseAuthorization()
+        } else if status == .authorizedWhenInUse || status == .authorizedAlways {
+            manager.requestLocation()
+        }
     }
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        location = locations.first?.coordinate
+        if let coordinate = locations.first?.coordinate {
+            location = coordinate
+            print("✅ Location updated: \(coordinate.latitude), \(coordinate.longitude)")
+        }
     }
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("Location error: \(error.localizedDescription)")
+        if let clError = error as? CLError {
+            switch clError.code {
+            case .denied:
+                print("⚠️ Location access denied by user")
+            case .locationUnknown:
+                print("⚠️ Location unknown (simulator may not have location)")
+            case .network:
+                print("⚠️ Location network error")
+            default:
+                print("⚠️ Location error: \(error.localizedDescription) (code: \(clError.code.rawValue))")
+            }
+        } else {
+            print("⚠️ Location error: \(error.localizedDescription)")
+        }
     }
     
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        if manager.authorizationStatus == .authorizedWhenInUse || manager.authorizationStatus == .authorizedAlways {
+        let status = manager.authorizationStatus
+        print("📍 Location authorization changed: \(status.rawValue)")
+        
+        if status == .authorizedWhenInUse || status == .authorizedAlways {
             manager.requestLocation()
+        } else if status == .denied {
+            print("⚠️ Location permission denied")
         }
     }
 }
@@ -1127,3 +1281,4 @@ struct Triangle: Shape {
     ContentView()
         .modelContainer(for: ContentItem.self, inMemory: true)
 }
+
