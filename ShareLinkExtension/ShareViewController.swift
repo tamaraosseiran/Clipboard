@@ -6,19 +6,24 @@ import OSLog
 // MARK: - ShareViewController (UIViewController wrapper)
 final class ShareViewController: UIViewController {
     private let log = Logger(subsystem: "com.tamaraosseiran.clipboard.share", category: "Share")
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
         print("🔵 [ShareViewController] viewDidLoad - Extension launched")
         log.info("Share extension launched")
-        
+
+        // Set preferred content size for share extension modal
+        preferredContentSize = CGSize(width: 375, height: 600)
+        print("🔵 [ShareViewController] Set preferredContentSize to \(preferredContentSize)")
+
         // Ensure we have a valid frame
         if view.frame.isEmpty {
             view.frame = UIScreen.main.bounds
             print("🔵 [ShareViewController] Set view frame to screen bounds")
         }
-        
+
         view.backgroundColor = .systemBackground
+        view.isOpaque = true
         
         // Create SwiftUI view with extension context
         let rootView = ShareRootView(context: extensionContext, logger: log)
