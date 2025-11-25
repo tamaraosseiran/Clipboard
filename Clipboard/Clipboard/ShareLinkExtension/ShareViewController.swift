@@ -18,12 +18,16 @@ final class ShareViewController: UIViewController {
             print("🔵 [ShareViewController] Set view frame to screen bounds")
         }
         
+        // Set preferred content size for extension
+        preferredContentSize = CGSize(width: 320, height: 480)
+        
         view.backgroundColor = .systemBackground
         
         // Create SwiftUI view with extension context
         let rootView = ShareRootView(context: extensionContext, logger: log)
         let hostingController = UIHostingController(rootView: rootView)
         
+        // Prevent auto-dismissal by keeping a strong reference
         addChild(hostingController)
         hostingController.view.translatesAutoresizingMaskIntoConstraints = false
         hostingController.view.backgroundColor = .systemBackground
@@ -67,7 +71,36 @@ struct ShareRootView: View {
     @State private var hasContent = false
     
     var body: some View {
-        NavigationView {
+        VStack(spacing: 0) {
+            // Navigation bar
+            HStack {
+                Button("Cancel") {
+                    print("🔵 [ShareRootView] User tapped Cancel")
+                    complete(cancelled: true)
+                }
+                .padding(.leading, 16)
+                
+                Spacer()
+                
+                Text("Add to Spots")
+                    .font(.headline)
+                
+                Spacer()
+                
+                Button("Save") {
+                    print("🔵 [ShareRootView] User tapped Save")
+                    saveSpot()
+                }
+                .fontWeight(.semibold)
+                .disabled(name.isEmpty)
+                .padding(.trailing, 16)
+            }
+            .frame(height: 44)
+            .background(Color(.systemBackground))
+            
+            Divider()
+            
+            // Content
             if isLoading {
                 VStack(spacing: 16) {
                     ProgressView()
@@ -101,7 +134,7 @@ struct ShareRootView: View {
                                 .tag(type)
                             }
                         }
-                        .pickerStyle(NavigationLinkPickerStyle())
+                        .pickerStyle(MenuPickerStyle())
                         
                         if !sourceURL.isEmpty {
                             VStack(alignment: .leading, spacing: 4) {
@@ -109,18 +142,18 @@ struct ShareRootView: View {
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                                 Text(sourceURL)
-                                            .font(.footnote)
+                                    .font(.footnote)
                                     .foregroundColor(.secondary)
-                                            .lineLimit(2)
-                                    }
-                                }
+                                    .lineLimit(2)
                             }
+                        }
+                    }
                     
                     Section(header: Text("Notes")) {
                         TextField("Note", text: $note, axis: .vertical)
                             .lineLimit(3...6)
-                        }
-                        
+                    }
+                    
                     if let error = errorMessage {
                         Section {
                             HStack {
@@ -130,26 +163,7 @@ struct ShareRootView: View {
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
-                            }
                         }
-                    }
-                    .navigationTitle("Add to Spots")
-                    .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        Button("Cancel") {
-                            print("🔵 [ShareRootView] User tapped Cancel")
-                            complete(cancelled: true)
-                        }
-                    }
-                    
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("Save") {
-                            print("🔵 [ShareRootView] User tapped Save")
-                            saveSpot()
-                        }
-                        .fontWeight(.semibold)
-                        .disabled(name.isEmpty)
                     }
                 }
             }
@@ -162,6 +176,15 @@ struct ShareRootView: View {
     // MARK: - Parse Content (Simplified, Direct Approach)
     private func parseContent() {
         print("🔵 [ShareRootView] parseContent() called")
+        
+        // Always show form after a short delay, even if parsing fails
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            if self.isLoading {
+                print("⏱️ [ShareRootView] Force showing form after delay")
+                self.isLoading = false
+            }
+        }
+        
         guard let ctx = context else {
             print("❌ [ShareRootView] No extension context")
             DispatchQueue.main.async {
@@ -185,7 +208,7 @@ struct ShareRootView: View {
         
         guard let attachments = firstItem.attachments, !attachments.isEmpty else {
             print("❌ [ShareRootView] No attachments found")
-                        DispatchQueue.main.async {
+            DispatchQueue.main.async {
                 errorMessage = "No attachments in shared content"
                 isLoading = false
             }
@@ -355,23 +378,10 @@ struct ShareRootView: View {
             print("✅ [ShareRootView] Saved to App Group")
             print("✅ [ShareRootView] Data size: \(data.count) bytes")
             
-            // Try to open main app
-            if let url = URL(string: "spots://import") {
-                var responder: UIResponder? = self
-                while responder != nil {
-                    if let application = responder as? UIApplication {
-                        application.open(url, options: [:], completionHandler: { success in
-                            print("🔵 [ShareRootView] Open URL result: \(success)")
-                        })
-                        break
-                    }
-                    responder = responder?.next
-                }
-            }
-            
             // Small delay to ensure data is written, then complete
+            // The main app will be woken up via URL scheme when extension completes
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            complete(cancelled: false)
+                complete(cancelled: false)
             }
         } else {
             print("❌ [ShareRootView] Failed to serialize spot data")
