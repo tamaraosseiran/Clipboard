@@ -53,7 +53,6 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>clipboard</string>
-				<string>spots</string>
 			</array>
 		</dict>
 	</array>
@@ -63,7 +62,5 @@
 	<true/>
 	<key>NSSupportsSuddenTermination</key>
 	<true/>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>We need your location to show your saved spots on the map and navigate to your current location.</string>
 </dict>
 </plist>

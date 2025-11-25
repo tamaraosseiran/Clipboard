@@ -39,19 +39,6 @@ struct ClipboardApp: App {
                     }
                 }
                 .onOpenURL { url in
-                    print("📱 [ClipboardApp] onOpenURL called: \(url.absoluteString)")
-                    
-                    // Handle spots://import from share extension
-                    if url.scheme == "spots" && url.host == "import" {
-                        print("✅ [ClipboardApp] Received spots://import - checking for shared content")
-                        // Trigger content check via notification
-                        NotificationCenter.default.post(
-                            name: NSNotification.Name("CheckForSharedContent"),
-                            object: nil
-                        )
-                        return
-                    }
-                    
                     // Handle direct app sharing (when user shares TO the Clipboard app)
                     print("📱 Direct app sharing received URL: \(url.absoluteString)")
                     print("📱 URL scheme: \(url.scheme ?? "nil")")
