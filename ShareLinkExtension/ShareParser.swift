@@ -16,32 +16,14 @@ struct SharedCandidate {
 
 enum ShareParser {
     static func parse(from context: NSExtensionContext, logger: Logger, completion: @escaping (Result<SharedCandidate, Error>) -> Void) {
-        print("🔵 [ShareParser] Starting parse...")
-        logger.info("Starting parse from extension context")
-        
-        guard let item = context.inputItems.first as? NSExtensionItem else {
-            logger.error("No input items found")
-            print("❌ [ShareParser] No input items found")
-            completion(.failure(ShareParserError.noItems))
-            return
-        }
-        
-        guard let providers = item.attachments, !providers.isEmpty else {
-            logger.error("No attachments found in input item")
-            print("❌ [ShareParser] No attachments found")
+        guard let item = context.inputItems.first as? NSExtensionItem,
+              let providers = item.attachments, !providers.isEmpty else {
+            logger.error("No input items or attachments found")
             completion(.failure(ShareParserError.noItems))
             return
         }
         
         logger.info("Parsing \(providers.count) item provider(s)")
-        print("📦 [ShareParser] Found \(providers.count) provider(s)")
-        
-        // Log all available type identifiers
-        for (index, provider) in providers.enumerated() {
-            let identifiers = provider.registeredTypeIdentifiers
-            print("📋 [ShareParser] Provider \(index + 1) types: \(identifiers.joined(separator: ", "))")
-            logger.info("Provider \(index + 1) types: \(identifiers.joined(separator: ", "))")
-        }
         
         // Prevent multiple completions
         var hasCompleted = false
@@ -55,24 +37,19 @@ enum ShareParser {
         func tryURL(_ provider: NSItemProvider, _ next: @escaping () -> Void) {
             if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
                 logger.info("Provider has URL type")
-                print("🔗 [ShareParser] Loading URL from provider...")
                 provider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { item, error in
                     if let error = error {
                         logger.error("Error loading URL: \(error.localizedDescription)")
-                        print("❌ [ShareParser] Error loading URL: \(error.localizedDescription)")
                         next()
                         return
                     }
                     if let url = item as? URL {
                         logger.info("Found URL: \(url.absoluteString)")
-                        print("✅ [ShareParser] Found URL: \(url.absoluteString)")
                         safeCompletion(.success(SharedCandidate(sourceURL: url)))
                     } else if let str = item as? String, let url = URL(string: str) {
                         logger.info("Found URL from string: \(url.absoluteString)")
-                        print("✅ [ShareParser] Found URL from string: \(url.absoluteString)")
                         safeCompletion(.success(SharedCandidate(sourceURL: url)))
                     } else {
-                        print("⚠️ [ShareParser] URL provider returned unexpected type: \(type(of: item))")
                         next()
                     }
                 }
