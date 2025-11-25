@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 import MapKit
 import CoreLocation
+import UserNotifications
 
 extension String: @retroactive Identifiable {
     public var id: String { self }
@@ -89,6 +90,26 @@ struct ContentView: View {
                             .foregroundColor(.blue)
                     }
                     
+                    // Refresh button (for checking shared content)
+                    Menu {
+                        Button(action: {
+                            print("🔄 Manual refresh triggered")
+                            checkForSharedContent()
+                        }) {
+                            Label("Check for Shared Content", systemImage: "arrow.clockwise")
+                        }
+                        
+                        Button(action: {
+                            testAppGroupAccess()
+                        }) {
+                            Label("Test App Group", systemImage: "wrench.and.screwdriver")
+                        }
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.title)
+                            .foregroundColor(.blue)
+                    }
+                    
                     // Add button
                     Button(action: { showingAddItem = true }) {
                         Image(systemName: "plus.circle.fill")
@@ -154,9 +175,80 @@ struct ContentView: View {
         }
         .onAppear {
             print("📱 ContentView appeared, checking for shared content...")
-            checkAppGroupForSharedURLs()
-            checkAppGroupForSharedContent()
+            checkForSharedContent()
+            setupNotificationObserver()
         }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            print("📱 App entering foreground, checking for shared content...")
+            checkForSharedContent()
+        }
+    }
+    
+    private func setupNotificationObserver() {
+        // Listen for app becoming active
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [self] _ in
+            print("📱 App became active, checking for shared content...")
+            checkForSharedContent()
+        }
+        
+        // Listen for manual check request (from URL scheme)
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("CheckForSharedContent"),
+            object: nil,
+            queue: .main
+        ) { [self] _ in
+            print("📱 Manual check requested, checking for shared content...")
+            checkForSharedContent()
+        }
+    }
+    
+    private func testAppGroupAccess() {
+        print("🧪 [TEST] Testing App Group access...")
+        guard let defaults = UserDefaults(suiteName: "group.com.tamaraosseiran.clipboard") else {
+            print("❌ [TEST] FAILED: Cannot access App Group")
+            return
+        }
+        
+        print("✅ [TEST] App Group accessible")
+        
+        // Test write
+        let testKey = "test_key_\(Date().timeIntervalSince1970)"
+        defaults.set("test_value", forKey: testKey)
+        defaults.synchronize()
+        
+        // Test read
+        if let value = defaults.string(forKey: testKey) {
+            print("✅ [TEST] Write/Read successful: \(value)")
+            defaults.removeObject(forKey: testKey)
+        } else {
+            print("❌ [TEST] Read failed")
+        }
+        
+        // Check for pending spot
+        if let pending = AppGroupStore().loadPending() {
+            print("✅ [TEST] Found pending spot: \(pending.name ?? "Untitled")")
+        } else {
+            print("ℹ️ [TEST] No pending spot found")
+        }
+        
+        // Check timestamp
+        if let timestamp = defaults.double(forKey: "last_shared_timestamp") as Double?, timestamp > 0 {
+            let date = Date(timeIntervalSince1970: timestamp)
+            print("✅ [TEST] Last share timestamp: \(date)")
+        } else {
+            print("ℹ️ [TEST] No share timestamp found")
+        }
+    }
+    
+    private func checkForSharedContent() {
+        // Check all possible sources in order of priority
+        checkForPendingSpot()
+        checkAppGroupForSharedURLs()
+        checkAppGroupForSharedContent()
     }
     
     private func checkAppGroupForSharedURLs() {
@@ -233,6 +325,88 @@ struct ContentView: View {
                 defaults.synchronize()
             }
         }
+    }
+    
+    private func checkForPendingSpot() {
+        print("📱 [checkForPendingSpot] Checking for pending spot from Share Extension...")
+        
+        guard let defaults = UserDefaults(suiteName: "group.com.tamaraosseiran.clipboard") else {
+            print("❌ [checkForPendingSpot] Failed to access App Group UserDefaults")
+            print("❌ [checkForPendingSpot] App Group might not be configured correctly")
+            return
+        }
+        
+        // Debug: List all keys in App Group
+        print("🔍 [checkForPendingSpot] App Group accessible. Checking for keys...")
+        let allKeys = Array(defaults.dictionaryRepresentation().keys)
+        let relevantKeys = allKeys.filter { $0.contains("pending") || $0.contains("Shared") || $0.contains("spot") }
+        print("🔍 [checkForPendingSpot] Found keys: \(relevantKeys)")
+        
+        // Check if timestamp was set (indicates extension ran)
+        if let timestamp = defaults.double(forKey: "last_shared_timestamp") as Double?, timestamp > 0 {
+            let date = Date(timeIntervalSince1970: timestamp)
+            print("✅ [checkForPendingSpot] Extension ran at: \(date)")
+        } else {
+            print("⚠️ [checkForPendingSpot] No timestamp found - extension may not have run")
+        }
+        
+        guard let pending = AppGroupStore().loadPending() else {
+            print("📱 [checkForPendingSpot] No pending spot found in App Group")
+            print("💡 [checkForPendingSpot] Try sharing something from Safari to test")
+            return
+        }
+        
+        print("✅ [checkForPendingSpot] Found pending spot: \(pending.name ?? "Untitled")")
+        print("📱 [checkForPendingSpot] Address: \(pending.address ?? "none")")
+        print("📱 [checkForPendingSpot] Source URL: \(pending.sourceURL ?? "none")")
+        
+        // Convert PendingSpot to SharedContentPreview for the preview sheet
+        let (_, sourceURL) = pending.toURLs()
+        
+        // Create Location if we have coordinates
+        var location: Location? = nil
+        if let lat = pending.latitude, let lon = pending.longitude, lat != 0.0 || lon != 0.0 {
+            location = Location(
+                latitude: lat,
+                longitude: lon,
+                address: pending.address,
+                city: nil,
+                state: nil,
+                country: nil
+            )
+            print("📱 [checkForPendingSpot] Created location with coordinates: \(lat), \(lon)")
+        } else if let address = pending.address, !address.isEmpty {
+            // Create location with just address if no coordinates
+            location = Location(
+                latitude: 0.0,
+                longitude: 0.0,
+                address: address,
+                city: nil,
+                state: nil,
+                country: nil
+            )
+            print("📱 [checkForPendingSpot] Created location with address only: \(address)")
+        }
+        
+        let preview = SharedContentPreview(
+            originalURL: sourceURL?.absoluteString ?? "",
+            title: pending.name ?? "Untitled",
+            description: pending.address ?? "",
+            contentType: .place, // Default to place, user can change
+            detectedLocation: location,
+            tags: []
+        )
+        
+        // Show the preview for user validation
+        DispatchQueue.main.async {
+            print("📱 [checkForPendingSpot] Showing preview sheet")
+            self.pendingSharedContent = preview
+            self.showingSharedContentPreview = true
+        }
+        
+        // Clear the pending spot AFTER showing the preview
+        AppGroupStore().clearPending()
+        print("✅ [checkForPendingSpot] Cleared pending spot from App Group")
     }
     
     private func processSharedContent(_ content: SharedContent) {
@@ -492,7 +666,10 @@ struct SharedContentPreviewView: View {
                             detectedLocation: editedLocation.isEmpty ? nil : Location(
                                 latitude: content.detectedLocation?.latitude ?? 0,
                                 longitude: content.detectedLocation?.longitude ?? 0,
-                                address: editedLocation
+                                address: editedLocation,
+                                city: nil,
+                                state: nil,
+                                country: nil
                             ),
                             tags: content.tags
                         )
@@ -605,8 +782,9 @@ struct MapView: View {
         span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
     ))
     @State private var selectedItem: ContentItem?
-    @State private var bottomSheetOffset: CGFloat = UIScreen.main.bounds.height * 0.5
-    @State private var bottomSheetHeight: CGFloat = UIScreen.main.bounds.height * 0.5
+    // Initialize with a smaller height that's always visible
+    @State private var bottomSheetHeight: CGFloat = 300
+    @State private var bottomSheetOffset: CGFloat = 0  // Will be calculated based on screen height
     @State private var isDragging = false
     
     var body: some View {
@@ -614,7 +792,7 @@ struct MapView: View {
             Map(position: $position, selection: $selectedItem) {
                 // Show user location
                 if let userLocation = locationManager.location {
-                    Annotation("My Location", coordinate: userLocation.coordinate) {
+                    Annotation("My Location", coordinate: userLocation) {
                         ZStack {
                             Circle()
                                 .fill(Color.blue)
@@ -642,35 +820,43 @@ struct MapView: View {
                 selectedItem = nil
             }
             
-            VStack {
-                Spacer()
-                
-                // Current Location Button
-                HStack {
+            GeometryReader { geometry in
+                VStack {
                     Spacer()
-                    Button(action: {
-                        centerOnUserLocation()
-                    }) {
-                        Image(systemName: "paperplane.fill")
-                            .font(.title3)
-                            .foregroundColor(.primary)
-                            .frame(width: 44, height: 44)
-                            .background(Color(.systemBackground))
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                            .shadow(radius: 4)
+                    
+                    // Current Location Button
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            centerOnUserLocation()
+                        }) {
+                            Image(systemName: "paperplane.fill")
+                                .font(.title3)
+                                .foregroundColor(.primary)
+                                .frame(width: 44, height: 44)
+                                .background(Color(.systemBackground))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .shadow(radius: 4)
+                        }
+                        .padding(.trailing, 16)
+                        .padding(.bottom, bottomSheetHeight + 20)
                     }
-                    .padding(.trailing, 16)
-                    .padding(.bottom, max(bottomSheetOffset + 20, 20))
+                    
+                    // Bottom Sheet - show all items, not just those with locations
+                    BottomSheetView(
+                        items: items,
+                        selectedItem: $selectedItem,
+                        offset: $bottomSheetOffset,
+                        height: $bottomSheetHeight,
+                        isDragging: $isDragging,
+                        screenHeight: geometry.size.height
+                    )
+                    .onAppear {
+                        // Initialize to show minHeight at bottom
+                        // Offset 0 = natural position (at bottom), negative = moves up (expanded)
+                        bottomSheetOffset = 0
+                    }
                 }
-                
-                // Bottom Sheet
-                BottomSheetView(
-                    items: itemsWithLocation,
-                    selectedItem: $selectedItem,
-                    offset: $bottomSheetOffset,
-                    height: $bottomSheetHeight,
-                    isDragging: $isDragging
-                )
             }
         }
         .sheet(item: $selectedItem) { item in
@@ -690,7 +876,7 @@ struct MapView: View {
         
         withAnimation {
             position = .camera(MapCamera(
-                centerCoordinate: userLocation.coordinate,
+                centerCoordinate: userLocation,
                 distance: 2000,
                 heading: 0,
                 pitch: 0
@@ -708,26 +894,62 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         super.init()
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyBest
-        requestLocation()
+        
+        // Don't request immediately - wait for authorization
+        let status = manager.authorizationStatus
+        if status == .authorizedWhenInUse || status == .authorizedAlways {
+            manager.requestLocation()
+        } else if status == .notDetermined {
+            manager.requestWhenInUseAuthorization()
+        }
     }
     
     func requestLocation() {
-        guard manager.authorizationStatus != .denied else { return }
-        manager.requestWhenInUseAuthorization()
-        manager.requestLocation()
+        let status = manager.authorizationStatus
+        guard status != .denied && status != .restricted else {
+            print("⚠️ Location permission denied or restricted")
+            return
+        }
+        
+        if status == .notDetermined {
+            manager.requestWhenInUseAuthorization()
+        } else if status == .authorizedWhenInUse || status == .authorizedAlways {
+            manager.requestLocation()
+        }
     }
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        location = locations.first?.coordinate
+        if let coordinate = locations.first?.coordinate {
+            location = coordinate
+            print("✅ Location updated: \(coordinate.latitude), \(coordinate.longitude)")
+        }
     }
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("Location error: \(error.localizedDescription)")
+        if let clError = error as? CLError {
+            switch clError.code {
+            case .denied:
+                print("⚠️ Location access denied by user")
+            case .locationUnknown:
+                print("⚠️ Location unknown (simulator may not have location)")
+            case .network:
+                print("⚠️ Location network error")
+            default:
+                print("⚠️ Location error: \(error.localizedDescription) (code: \(clError.code.rawValue))")
+            }
+        } else {
+            print("⚠️ Location error: \(error.localizedDescription)")
+        }
     }
     
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        if manager.authorizationStatus == .authorizedWhenInUse || manager.authorizationStatus == .authorizedAlways {
+        let status = manager.authorizationStatus
+        print("📍 Location authorization changed: \(status.rawValue)")
+        
+        if status == .authorizedWhenInUse || status == .authorizedAlways {
             manager.requestLocation()
+        } else if status == .denied {
+            print("⚠️ Location permission denied")
         }
     }
 }
@@ -755,13 +977,16 @@ struct BottomSheetView: View {
     @Binding var offset: CGFloat
     @Binding var height: CGFloat
     @Binding var isDragging: Bool
+    let screenHeight: CGFloat
     
     @State private var dragOffset: CGFloat = 0
     @State private var showingAddItem = false
     @State private var selectedFilter: ContentType? = nil
     
-    private let minHeight: CGFloat = 200
-    private let maxHeight: CGFloat = UIScreen.main.bounds.height * 0.9
+    private let minHeight: CGFloat = 300
+    private var maxHeight: CGFloat {
+        screenHeight * 0.9
+    }
     
     var filteredItems: [ContentItem] {
         var filtered = items
@@ -784,7 +1009,7 @@ struct BottomSheetView: View {
             // Header
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Spots")
+                    Text("My Spots")
                         .font(.largeTitle)
                         .fontWeight(.bold)
                     Text("\(filteredItems.count) spots")
@@ -818,18 +1043,34 @@ struct BottomSheetView: View {
             .padding(.bottom, 8)
             
             // List of items
-            ScrollView {
-                LazyVStack(spacing: 12) {
-                    ForEach(filteredItems) { item in
-                        BottomSheetItemRow(item: item, selectedItem: $selectedItem)
-                    }
+            if filteredItems.isEmpty {
+                VStack(spacing: 12) {
+                    Spacer()
+                    Text("No spots yet")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    Text("Tap + to add your first spot")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Spacer()
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
-                .padding(.bottom, 20)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 40)
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: 12) {
+                        ForEach(filteredItems) { item in
+                            BottomSheetItemRow(item: item, selectedItem: $selectedItem)
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
+                    .padding(.bottom, 20)
+                }
             }
         }
         .frame(height: height)
+        .frame(maxWidth: .infinity)
         .background(
             Color(.systemBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
@@ -840,27 +1081,34 @@ struct BottomSheetView: View {
             DragGesture()
                 .onChanged { value in
                     isDragging = true
-                    let newOffset = offset + value.translation.height
+                    // Negative translation = drag up = expand (move sheet up), positive = drag down = collapse
+                    // Offset: 0 = at bottom (collapsed), negative = moved up (expanded)
+                    let maxNegativeOffset = -(maxHeight - minHeight)
+                    let newOffset = max(maxNegativeOffset, min(0, offset + value.translation.height))
+                    dragOffset = value.translation.height
                     
-                    // Constrain dragging
-                    if newOffset >= 0 && newOffset <= maxHeight - minHeight {
-                        dragOffset = value.translation.height
+                    // Constrain dragOffset
+                    if newOffset < maxNegativeOffset {
+                        dragOffset = -(offset - maxNegativeOffset)
+                    } else if newOffset > 0 {
+                        dragOffset = -offset
                     }
                 }
                 .onEnded { value in
                     isDragging = false
-                    let newOffset = offset + value.translation.height
-                    let threshold = (maxHeight - minHeight) / 2
+                    let finalOffset = offset + value.translation.height
+                    let maxNegativeOffset = -(maxHeight - minHeight)
+                    let threshold = maxNegativeOffset / 2
                     
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                        if newOffset < threshold {
-                            // Snap to top
-                            offset = 0
+                        if finalOffset < threshold {
+                            // Expand - move up to show more
                             height = maxHeight
+                            offset = maxNegativeOffset
                         } else {
-                            // Snap to middle
-                            offset = maxHeight - minHeight - 100
-                            height = minHeight + 100
+                            // Collapse - back to bottom
+                            height = minHeight
+                            offset = 0
                         }
                         dragOffset = 0
                     }
@@ -1033,3 +1281,4 @@ struct Triangle: Shape {
     ContentView()
         .modelContainer(for: ContentItem.self, inMemory: true)
 }
+
