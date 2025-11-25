@@ -10,10 +10,10 @@
         <scene sceneID="ceB-am-kn3">
             <objects>
                 <viewController id="j1y-V4-xli" customClass="ShareViewController" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" opaque="NO" contentMode="scaleToFill" id="wbc-yd-nQP">
+                    <view key="view" opaque="YES" contentMode="scaleToFill" id="wbc-yd-nQP">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <viewLayoutGuide key="safeArea" id="1Xd-am-t49"/>
                     </view>
                 </viewController>
@@ -21,4 +21,9 @@
             </objects>
         </scene>
     </scenes>
+    <resources>
+        <systemColor name="systemBackgroundColor">
+            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+        </systemColor>
+    </resources>
 </document>
