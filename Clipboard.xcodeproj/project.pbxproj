@@ -62,9 +62,17 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
-				ShareLinkExtension/Info.plist,
+				ExportOptions.plist,
+				ShareExtension,
 			);
 			target = 016547732E62440700C46AD8 /* Clipboard */;
+		};
+		01BF9F552E82031D00EDCF72 /* Exceptions for "ShareLinkExtension" folder in "ShareLinkExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 01BF9F402E81FC5C00EDCF72 /* ShareLinkExtension */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -89,6 +97,9 @@
 		};
 		01BF9F422E81FC5C00EDCF72 /* ShareLinkExtension */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				01BF9F552E82031D00EDCF72 /* Exceptions for "ShareLinkExtension" folder in "ShareLinkExtension" target */,
+			);
 			path = ShareLinkExtension;
 			sourceTree = "<group>";
 		};
@@ -244,19 +255,6 @@
 			productReference = 01BF9F412E81FC5C00EDCF72 /* ShareLinkExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-		BED3EF128D964CFFAA941B78 /* ShareExtension */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 01BF9F512E81FC5C00EDCF72 /* Build configuration list for PBXNativeTarget "ShareExtension" */;
-			buildPhases = (
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = ShareExtension;
-			productName = ShareExtension;
-			productType = "com.apple.product-type.app-extension";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -298,7 +296,6 @@
 			projectRoot = "";
 			targets = (
 				016547732E62440700C46AD8 /* Clipboard */,
-				BED3EF128D964CFFAA941B78 /* ShareExtension */,
 				016547872E62440800C46AD8 /* ClipboardTests */,
 				016547912E62440800C46AD8 /* ClipboardUITests */,
 				01BF9F402E81FC5C00EDCF72 /* ShareLinkExtension */,
@@ -649,25 +646,6 @@
 			};
 			name = Release;
 		};
-		01BF9F3B2E80C66A00EDCF72 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				PRODUCT_NAME = ShareExtension;
-			};
-			name = Debug;
-		};
-		01BF9F3C2E80C66A00EDCF72 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				PRODUCT_NAME = ShareExtension;
-			};
-			name = Release;
-		};
 		01BF9F4D2E81FC5C00EDCF72 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -770,15 +748,6 @@
 			buildConfigurations = (
 				01BF9F4D2E81FC5C00EDCF72 /* Debug */,
 				01BF9F4E2E81FC5C00EDCF72 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		01BF9F512E81FC5C00EDCF72 /* Build configuration list for PBXNativeTarget "ShareExtension" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				01BF9F3B2E80C66A00EDCF72 /* Debug */,
-				01BF9F3C2E80C66A00EDCF72 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
