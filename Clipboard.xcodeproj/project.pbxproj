@@ -50,6 +50,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		012A459E2ED55EF40002C8E4 /* Clipboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Clipboard.xcodeproj; sourceTree = "<group>"; };
 		016547742E62440700C46AD8 /* Clipboard.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Clipboard.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		016547882E62440800C46AD8 /* ClipboardTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClipboardTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		016547922E62440800C46AD8 /* ClipboardUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClipboardUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -61,18 +62,10 @@
 		0165479A2E62440800C46AD8 /* Exceptions for "Clipboard" folder in "Clipboard" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Info.plist,
 				ExportOptions.plist,
-				ShareExtension,
+				Info.plist,
 			);
 			target = 016547732E62440700C46AD8 /* Clipboard */;
-		};
-		01BF9F552E82031D00EDCF72 /* Exceptions for "ShareLinkExtension" folder in "ShareLinkExtension" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = 01BF9F402E81FC5C00EDCF72 /* ShareLinkExtension */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -97,9 +90,6 @@
 		};
 		01BF9F422E81FC5C00EDCF72 /* ShareLinkExtension */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				01BF9F552E82031D00EDCF72 /* Exceptions for "ShareLinkExtension" folder in "ShareLinkExtension" target */,
-			);
 			path = ShareLinkExtension;
 			sourceTree = "<group>";
 		};
@@ -137,6 +127,13 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		012A45A72ED55EF40002C8E4 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		0165476B2E62440700C46AD8 = {
 			isa = PBXGroup;
 			children = (
@@ -293,6 +290,12 @@
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 016547752E62440700C46AD8 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 012A45A72ED55EF40002C8E4 /* Products */;
+					ProjectRef = 012A459E2ED55EF40002C8E4 /* Clipboard.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				016547732E62440700C46AD8 /* Clipboard */,
