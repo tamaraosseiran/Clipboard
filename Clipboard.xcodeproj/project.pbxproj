@@ -675,7 +675,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Clipboard/ShareLinkExtension/Info.plist;
+				INFOPLIST_FILE = ShareLinkExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ShareLinkExtension;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
@@ -704,7 +704,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Clipboard/ShareLinkExtension/Info.plist;
+				INFOPLIST_FILE = ShareLinkExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ShareLinkExtension;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
