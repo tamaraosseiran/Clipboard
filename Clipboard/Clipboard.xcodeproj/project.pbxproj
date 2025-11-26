@@ -58,21 +58,6 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		0135A2522ED4097D00986ADB /* Exceptions for "Clipboard" folder in "ShareLinkExtension" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Item.swift,
-			);
-			target = 01BF9F402E81FC5C00EDCF72 /* ShareLinkExtension */;
-		};
-		0165479A2E62440800C46AD8 /* Exceptions for "Clipboard" folder in "Clipboard" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-				ShareLinkExtension/Info.plist,
-			);
-			target = 016547732E62440700C46AD8 /* Clipboard */;
-		};
 		01BF9F552E82031B00EDCF72 /* Exceptions for "ShareLinkExtension" folder in "ShareLinkExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -85,10 +70,6 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		016547762E62440700C46AD8 /* Clipboard */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				0165479A2E62440800C46AD8 /* Exceptions for "Clipboard" folder in "Clipboard" target */,
-				0135A2522ED4097D00986ADB /* Exceptions for "Clipboard" folder in "ShareLinkExtension" target */,
-			);
 			path = Clipboard;
 			sourceTree = "<group>";
 		};

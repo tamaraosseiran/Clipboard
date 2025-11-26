@@ -50,6 +50,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		012A459E2ED55EF40002C8E4 /* Clipboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Clipboard.xcodeproj; sourceTree = "<group>"; };
 		016547742E62440700C46AD8 /* Clipboard.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Clipboard.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		016547882E62440800C46AD8 /* ClipboardTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClipboardTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		016547922E62440800C46AD8 /* ClipboardUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClipboardUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -61,8 +62,8 @@
 		0165479A2E62440800C46AD8 /* Exceptions for "Clipboard" folder in "Clipboard" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				ExportOptions.plist,
 				Info.plist,
-				ShareLinkExtension/Info.plist,
 			);
 			target = 016547732E62440700C46AD8 /* Clipboard */;
 		};
@@ -126,6 +127,13 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		012A45A72ED55EF40002C8E4 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		0165476B2E62440700C46AD8 = {
 			isa = PBXGroup;
 			children = (
@@ -244,19 +252,6 @@
 			productReference = 01BF9F412E81FC5C00EDCF72 /* ShareLinkExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-		BED3EF128D964CFFAA941B78 /* ShareExtension */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 01BF9F512E81FC5C00EDCF72 /* Build configuration list for PBXNativeTarget "ShareExtension" */;
-			buildPhases = (
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = ShareExtension;
-			productName = ShareExtension;
-			productType = "com.apple.product-type.app-extension";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -295,10 +290,15 @@
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 016547752E62440700C46AD8 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 012A45A72ED55EF40002C8E4 /* Products */;
+					ProjectRef = 012A459E2ED55EF40002C8E4 /* Clipboard.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				016547732E62440700C46AD8 /* Clipboard */,
-				BED3EF128D964CFFAA941B78 /* ShareExtension */,
 				016547872E62440800C46AD8 /* ClipboardTests */,
 				016547912E62440800C46AD8 /* ClipboardUITests */,
 				01BF9F402E81FC5C00EDCF72 /* ShareLinkExtension */,
@@ -649,25 +649,6 @@
 			};
 			name = Release;
 		};
-		01BF9F3B2E80C66A00EDCF72 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				PRODUCT_NAME = ShareExtension;
-			};
-			name = Debug;
-		};
-		01BF9F3C2E80C66A00EDCF72 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				PRODUCT_NAME = ShareExtension;
-			};
-			name = Release;
-		};
 		01BF9F4D2E81FC5C00EDCF72 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -675,7 +656,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = ShareLinkExtension/Info.plist;
+				INFOPLIST_FILE = Clipboard/ShareLinkExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ShareLinkExtension;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
@@ -704,7 +685,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = ShareLinkExtension/Info.plist;
+				INFOPLIST_FILE = Clipboard/ShareLinkExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ShareLinkExtension;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
@@ -770,15 +751,6 @@
 			buildConfigurations = (
 				01BF9F4D2E81FC5C00EDCF72 /* Debug */,
 				01BF9F4E2E81FC5C00EDCF72 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		01BF9F512E81FC5C00EDCF72 /* Build configuration list for PBXNativeTarget "ShareExtension" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				01BF9F3B2E80C66A00EDCF72 /* Debug */,
-				01BF9F3C2E80C66A00EDCF72 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

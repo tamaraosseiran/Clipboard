@@ -18,7 +18,11 @@ final class ShareViewController: UIViewController {
 
         // Ensure we have a valid frame
         if view.frame.isEmpty {
-            view.frame = UIScreen.main.bounds
+            if let windowScene = view.window?.windowScene {
+                view.frame = windowScene.screen.bounds
+            } else {
+                view.frame = CGRect(x: 0, y: 0, width: 375, height: 600)
+            }
             print("🔵 [ShareViewController] Set view frame to screen bounds")
         }
 
@@ -362,16 +366,9 @@ struct ShareRootView: View {
             
             // Try to open main app
             if let url = URL(string: "spots://import") {
-                var responder: UIResponder? = self
-                while responder != nil {
-                    if let application = responder as? UIApplication {
-                        application.open(url, options: [:], completionHandler: { success in
-                            print("🔵 [ShareRootView] Open URL result: \(success)")
-                        })
-                        break
-                    }
-                    responder = responder?.next
-                }
+                // In app extensions, we can't use UIApplication.shared
+                // The main app will be opened when the extension completes
+                print("🔵 [ShareRootView] Will open main app via URL scheme: spots://import")
             }
             
             // Small delay to ensure data is written, then complete
