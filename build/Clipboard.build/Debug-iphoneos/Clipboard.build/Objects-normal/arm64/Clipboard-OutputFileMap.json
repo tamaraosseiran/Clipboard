@@ -1,0 +1,139 @@
+{
+  "" : {
+    "diagnostics" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/Clipboard-primary.dia",
+    "emit-module-dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/Clipboard-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/Clipboard-primary-emit-module.dia",
+    "pch" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/Clipboard-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/Clipboard-primary.swiftdeps"
+  },
+  "/Users/tamaraosseiran/Documents/Clipboard/Clipboard/AddItemView.swift" : {
+    "const-values" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/AddItemView.swiftconstvalues",
+    "dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/AddItemView.d",
+    "diagnostics" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/AddItemView.dia",
+    "index-unit-output-path" : "/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/AddItemView.o",
+    "llvm-bc" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/AddItemView.bc",
+    "object" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/AddItemView.o",
+    "swift-dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/AddItemView.swiftdeps",
+    "swiftmodule" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/AddItemView~partial.swiftmodule"
+  },
+  "/Users/tamaraosseiran/Documents/Clipboard/Clipboard/AppGroupIdentifier.swift" : {
+    "const-values" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/AppGroupIdentifier.swiftconstvalues",
+    "dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/AppGroupIdentifier.d",
+    "diagnostics" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/AppGroupIdentifier.dia",
+    "index-unit-output-path" : "/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/AppGroupIdentifier.o",
+    "llvm-bc" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/AppGroupIdentifier.bc",
+    "object" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/AppGroupIdentifier.o",
+    "swift-dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/AppGroupIdentifier.swiftdeps",
+    "swiftmodule" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/AppGroupIdentifier~partial.swiftmodule"
+  },
+  "/Users/tamaraosseiran/Documents/Clipboard/Clipboard/AppGroupStore.swift" : {
+    "const-values" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/AppGroupStore.swiftconstvalues",
+    "dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/AppGroupStore.d",
+    "diagnostics" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/AppGroupStore.dia",
+    "index-unit-output-path" : "/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/AppGroupStore.o",
+    "llvm-bc" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/AppGroupStore.bc",
+    "object" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/AppGroupStore.o",
+    "swift-dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/AppGroupStore.swiftdeps",
+    "swiftmodule" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/AppGroupStore~partial.swiftmodule"
+  },
+  "/Users/tamaraosseiran/Documents/Clipboard/Clipboard/Category.swift" : {
+    "const-values" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/Category.swiftconstvalues",
+    "dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/Category.d",
+    "diagnostics" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/Category.dia",
+    "index-unit-output-path" : "/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/Category.o",
+    "llvm-bc" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/Category.bc",
+    "object" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/Category.o",
+    "swift-dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/Category.swiftdeps",
+    "swiftmodule" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/Category~partial.swiftmodule"
+  },
+  "/Users/tamaraosseiran/Documents/Clipboard/Clipboard/ClipboardApp.swift" : {
+    "const-values" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ClipboardApp.swiftconstvalues",
+    "dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ClipboardApp.d",
+    "diagnostics" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ClipboardApp.dia",
+    "index-unit-output-path" : "/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ClipboardApp.o",
+    "llvm-bc" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ClipboardApp.bc",
+    "object" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ClipboardApp.o",
+    "swift-dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ClipboardApp.swiftdeps",
+    "swiftmodule" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ClipboardApp~partial.swiftmodule"
+  },
+  "/Users/tamaraosseiran/Documents/Clipboard/Clipboard/ContentItem.swift" : {
+    "const-values" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ContentItem.swiftconstvalues",
+    "dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ContentItem.d",
+    "diagnostics" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ContentItem.dia",
+    "index-unit-output-path" : "/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ContentItem.o",
+    "llvm-bc" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ContentItem.bc",
+    "object" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ContentItem.o",
+    "swift-dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ContentItem.swiftdeps",
+    "swiftmodule" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ContentItem~partial.swiftmodule"
+  },
+  "/Users/tamaraosseiran/Documents/Clipboard/Clipboard/ContentType.swift" : {
+    "const-values" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ContentType.swiftconstvalues",
+    "dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ContentType.d",
+    "diagnostics" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ContentType.dia",
+    "index-unit-output-path" : "/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ContentType.o",
+    "llvm-bc" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ContentType.bc",
+    "object" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ContentType.o",
+    "swift-dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ContentType.swiftdeps",
+    "swiftmodule" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ContentType~partial.swiftmodule"
+  },
+  "/Users/tamaraosseiran/Documents/Clipboard/Clipboard/ContentView.swift" : {
+    "const-values" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ContentView.swiftconstvalues",
+    "dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ContentView.d",
+    "diagnostics" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ContentView.dia",
+    "index-unit-output-path" : "/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ContentView.o",
+    "llvm-bc" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ContentView.bc",
+    "object" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ContentView.o",
+    "swift-dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ContentView.swiftdeps",
+    "swiftmodule" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ContentView~partial.swiftmodule"
+  },
+  "/Users/tamaraosseiran/Documents/Clipboard/Clipboard/ItemDetailView.swift" : {
+    "const-values" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ItemDetailView.swiftconstvalues",
+    "dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ItemDetailView.d",
+    "diagnostics" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ItemDetailView.dia",
+    "index-unit-output-path" : "/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ItemDetailView.o",
+    "llvm-bc" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ItemDetailView.bc",
+    "object" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ItemDetailView.o",
+    "swift-dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ItemDetailView.swiftdeps",
+    "swiftmodule" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/ItemDetailView~partial.swiftmodule"
+  },
+  "/Users/tamaraosseiran/Documents/Clipboard/Clipboard/Location.swift" : {
+    "const-values" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/Location.swiftconstvalues",
+    "dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/Location.d",
+    "diagnostics" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/Location.dia",
+    "index-unit-output-path" : "/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/Location.o",
+    "llvm-bc" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/Location.bc",
+    "object" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/Location.o",
+    "swift-dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/Location.swiftdeps",
+    "swiftmodule" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/Location~partial.swiftmodule"
+  },
+  "/Users/tamaraosseiran/Documents/Clipboard/Clipboard/SharedInboxReader.swift" : {
+    "const-values" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/SharedInboxReader.swiftconstvalues",
+    "dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/SharedInboxReader.d",
+    "diagnostics" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/SharedInboxReader.dia",
+    "index-unit-output-path" : "/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/SharedInboxReader.o",
+    "llvm-bc" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/SharedInboxReader.bc",
+    "object" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/SharedInboxReader.o",
+    "swift-dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/SharedInboxReader.swiftdeps",
+    "swiftmodule" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/SharedInboxReader~partial.swiftmodule"
+  },
+  "/Users/tamaraosseiran/Documents/Clipboard/Clipboard/URLParser.swift" : {
+    "const-values" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/URLParser.swiftconstvalues",
+    "dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/URLParser.d",
+    "diagnostics" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/URLParser.dia",
+    "index-unit-output-path" : "/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/URLParser.o",
+    "llvm-bc" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/URLParser.bc",
+    "object" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/URLParser.o",
+    "swift-dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/URLParser.swiftdeps",
+    "swiftmodule" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/URLParser~partial.swiftmodule"
+  },
+  "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/tamaraosseiran/Documents/Clipboard/build/Clipboard.build/Debug-iphoneos/Clipboard.build/Objects-normal/arm64/GeneratedAssetSymbols~partial.swiftmodule"
+  }
+}

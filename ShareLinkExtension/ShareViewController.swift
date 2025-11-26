@@ -372,11 +372,9 @@ struct ShareRootView: View {
             print("✅ [ShareRootView] Data size: \(data.count) bytes")
             
             // Try to open main app
-            if let url = URL(string: "spots://import") {
-                // In app extensions, we can't use UIApplication.shared
-                // The main app will be opened when the extension completes
-                print("🔵 [ShareRootView] Will open main app via URL scheme: spots://import")
-            }
+            // In app extensions, we can't use UIApplication.shared
+            // The main app will be opened when the extension completes
+            print("🔵 [ShareRootView] Will open main app via URL scheme: spots://import")
             
             // Small delay to ensure data is written, then complete
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {

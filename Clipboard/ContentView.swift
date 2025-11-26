@@ -491,6 +491,13 @@ struct ParsedContent {
     let tags: [String]
 }
 
+struct SharedContent: Codable {
+    let title: String
+    let url: String
+    let description: String
+    let contentType: String
+}
+
 // MARK: - Shared Content Preview View
 struct SharedContentPreviewView: View {
     let content: SharedContentPreview
