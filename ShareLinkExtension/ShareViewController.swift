@@ -1,3 +1,10 @@
+//
+//  ShareViewController.swift
+//  ShareLinkExtension
+//
+//  Created by Tamara Osseiran on 9/22/25.
+//
+
 import UIKit
 import SwiftUI
 import UniformTypeIdentifiers
