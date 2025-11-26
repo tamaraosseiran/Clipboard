@@ -51,6 +51,7 @@
 
 /* Begin PBXFileReference section */
 		012A459E2ED55EF40002C8E4 /* Clipboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Clipboard.xcodeproj; sourceTree = "<group>"; };
+		012A546C2ED7A6700002C8E4 /* Clipboard.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Clipboard.xcodeproj; sourceTree = "<group>"; };
 		016547742E62440700C46AD8 /* Clipboard.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Clipboard.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		016547882E62440800C46AD8 /* ClipboardTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClipboardTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		016547922E62440800C46AD8 /* ClipboardUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClipboardUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -128,6 +129,13 @@
 
 /* Begin PBXGroup section */
 		012A45A72ED55EF40002C8E4 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		012A54722ED7A6700002C8E4 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -291,6 +299,10 @@
 			productRefGroup = 016547752E62440700C46AD8 /* Products */;
 			projectDirPath = "";
 			projectReferences = (
+				{
+					ProductGroup = 012A54722ED7A6700002C8E4 /* Products */;
+					ProjectRef = 012A546C2ED7A6700002C8E4 /* Clipboard.xcodeproj */;
+				},
 				{
 					ProductGroup = 012A45A72ED55EF40002C8E4 /* Products */;
 					ProjectRef = 012A459E2ED55EF40002C8E4 /* Clipboard.xcodeproj */;
@@ -656,7 +668,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Clipboard/ShareLinkExtension/Info.plist;
+				INFOPLIST_FILE = ShareLinkExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ShareLinkExtension;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
@@ -685,7 +697,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Clipboard/ShareLinkExtension/Info.plist;
+				INFOPLIST_FILE = ShareLinkExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ShareLinkExtension;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
