@@ -9,6 +9,8 @@ import UIKit
 import SwiftUI
 import UniformTypeIdentifiers
 import OSLog
+import CoreLocation
+import MapKit
 
 // MARK: - ShareViewController (UIViewController wrapper)
 final class ShareViewController: UIViewController {
@@ -78,6 +80,9 @@ struct ShareRootView: View {
     @State private var note: String = ""
     @State private var sourceURL: String = ""
     
+    @State private var latitude: Double?
+    @State private var longitude: Double?
+    
     @State private var isLoading = true
     @State private var errorMessage: String?
     @State private var hasContent = false
@@ -102,8 +107,11 @@ struct ShareRootView: View {
                         TextField("Name", text: $name)
                             .textInputAutocapitalization(.words)
                         
-                        TextField("Address", text: $location)
-                            .textInputAutocapitalization(.words)
+                        AddressSearchView(
+                            address: $location,
+                            latitude: $latitude,
+                            longitude: $longitude
+                        )
                         
                         Picker("Category", selection: $selectedContentType) {
                             ForEach(ContentType.allCases, id: \.self) { type in
@@ -289,26 +297,71 @@ struct ShareRootView: View {
         group.notify(queue: .main) {
             print("🔵 [ShareRootView] All loads completed")
             
-            // Always show the form, even if we didn't find content
-            self.isLoading = false
-            self.hasContent = true
-            
-            // Update UI with found content
+            // If we found a URL, fetch metadata using MetadataFetcher
             if let url = foundURL {
                 self.sourceURL = url.absoluteString
-                self.name = url.host ?? (url.lastPathComponent.isEmpty ? "Shared Link" : url.lastPathComponent)
-                if self.name.isEmpty {
-                    self.name = "Shared Link"
+                
+                // Create a SharedCandidate for MetadataFetcher
+                let candidate = SharedCandidate(
+                    sourceURL: url,
+                    rawText: foundText,
+                    movieFileURL: nil,
+                    imageFileURL: nil
+                )
+                
+                // Fetch metadata asynchronously
+                MetadataFetcher.buildDraft(from: candidate, logger: self.logger) { draft in
+                    DispatchQueue.main.async {
+                        // Update UI with fetched metadata
+                        if let fetchedName = draft.name, !fetchedName.isEmpty {
+                            self.name = fetchedName
+                        } else {
+                            // Fallback to URL-based name
+                            self.name = url.host ?? (url.lastPathComponent.isEmpty ? "Shared Link" : url.lastPathComponent)
+                            if self.name.isEmpty {
+                                self.name = "Shared Link"
+                            }
+                        }
+                        
+                        if let fetchedAddress = draft.address, !fetchedAddress.isEmpty {
+                            self.location = fetchedAddress
+                            // Geocode the address to get coordinates
+                            self.geocodeAddress(fetchedAddress)
+                        } else {
+                            // Try to extract address from URL or text
+                            if let text = foundText {
+                                self.location = self.extractAddressFromText(text) ?? ""
+                            }
+                        }
+                        
+                        // Store coordinates if available
+                        if let lat = draft.latitude, let lon = draft.longitude {
+                            self.latitude = lat
+                            self.longitude = lon
+                        }
+                        
+                        self.isLoading = false
+                        self.hasContent = true
+                        print("✅ [ShareRootView] UI updated with metadata: \(self.name)")
+                    }
                 }
-                self.location = url.absoluteString
-                print("✅ [ShareRootView] UI updated with URL: \(url.absoluteString)")
             } else if let text = foundText {
+                // No URL, just text - try to extract address
                 self.name = "Shared Text"
-                self.location = text
+                if let address = self.extractAddressFromText(text) {
+                    self.location = address
+                    self.geocodeAddress(address)
+                } else {
+                    self.location = text
+                }
+                self.isLoading = false
+                self.hasContent = true
                 print("✅ [ShareRootView] UI updated with text")
             } else {
+                // No content found
+                self.isLoading = false
+                self.hasContent = true
                 print("⚠️ [ShareRootView] No URL or text found - showing empty form")
-                // Show form with empty fields so user can enter manually
                 if self.name.isEmpty {
                     self.name = ""
                 }
@@ -339,6 +392,47 @@ struct ShareRootView: View {
         return nil
     }
     
+    // MARK: - Extract Address from Text
+    private func extractAddressFromText(_ text: String) -> String? {
+        let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.address.rawValue)
+        let range = NSRange(text.startIndex..., in: text)
+        if let match = detector?.firstMatch(in: text, options: [], range: range),
+           let addressRange = Range(match.range, in: text) {
+            return String(text[addressRange])
+        }
+        return nil
+    }
+    
+    // MARK: - Geocode Address
+    // Note: This function is now primarily used as a fallback.
+    // AddressSearchView handles geocoding automatically when users select an address.
+    @available(iOS, deprecated: 26.0, message: "CLGeocoder is deprecated, but still functional. AddressSearchView uses MKLocalSearch which is preferred.")
+    private func geocodeAddress(_ address: String) {
+        guard !address.isEmpty else { return }
+        
+        // Note: CLGeocoder is deprecated in iOS 26.0, but still functional
+        // Using it for consistency with the main app until MapKit replacement is stable
+        // This is only used as a fallback - AddressSearchView uses MKLocalSearch which is preferred
+        let geocoder = CLGeocoder()
+        geocoder.geocodeAddressString(address) { placemarks, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("⚠️ [ShareRootView] Geocoding error: \(error.localizedDescription)")
+                    return
+                }
+                
+                if let placemark = placemarks?.first,
+                   let location = placemark.location {
+                    self.latitude = location.coordinate.latitude
+                    self.longitude = location.coordinate.longitude
+                    print("✅ [ShareRootView] Geocoded address: \(address) -> \(self.latitude!), \(self.longitude!)")
+                } else {
+                    print("⚠️ [ShareRootView] No coordinates found for address: \(address)")
+                }
+            }
+        }
+    }
+    
     // MARK: - Save Spot
     private func saveSpot() {
         print("💾 [ShareRootView] Saving spot...")
@@ -354,7 +448,7 @@ struct ShareRootView: View {
         }
         
         // Create spot data matching the format main app expects
-        let spotData: [String: Any] = [
+        var spotData: [String: Any] = [
             "name": name,
             "address": location,
             "sourceURL": sourceURL,
@@ -362,6 +456,13 @@ struct ShareRootView: View {
             "notes": note,
             "createdAt": Date().timeIntervalSince1970
         ]
+        
+        // Add coordinates if available
+        if let lat = latitude, let lon = longitude {
+            spotData["latitude"] = lat
+            spotData["longitude"] = lon
+            print("💾 [ShareRootView] Including coordinates: \(lat), \(lon)")
+        }
         
         // Save to App Group
         if let data = try? JSONSerialization.data(withJSONObject: spotData) {

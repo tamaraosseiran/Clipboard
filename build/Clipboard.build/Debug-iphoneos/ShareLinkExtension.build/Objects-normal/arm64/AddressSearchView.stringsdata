@@ -1,0 +1,16 @@
+{
+  "source": "/Users/tamaraosseiran/Documents/Clipboard/ShareLinkExtension/AddressSearchView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Search for address",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 25
+        }
+      }
+    ]
+  },
+  "version": 1
+}
