@@ -14,9 +14,14 @@ struct ParsedSpotDraft {
 }
 
 enum MetadataFetcher {
+    
+    // Store the caption from oEmbed for use by ContentEnricher
+    static var lastFetchedCaption: String?
+    
     static func buildDraft(from candidate: SharedCandidate, logger: Logger, completion: @escaping (ParsedSpotDraft) -> Void) {
         var draft = ParsedSpotDraft.empty
         draft.sourceURL = candidate.sourceURL
+        lastFetchedCaption = nil
         
         // Add image and movie files to photos array
         if let img = candidate.imageFileURL {
@@ -32,6 +37,122 @@ enum MetadataFetcher {
             completion(draft)
             return
         }
+        
+        // Check if this is a TikTok URL - use oEmbed API first
+        if url.host?.contains("tiktok.com") == true {
+            logger.info("Detected TikTok URL, fetching via oEmbed API")
+            fetchTikTokOEmbed(url: url, logger: logger) { oembedResult in
+                if let result = oembedResult {
+                    draft.name = result.title
+                    lastFetchedCaption = result.title // Store the caption
+                    logger.info("TikTok oEmbed result - title: \(result.title ?? "nil")")
+                }
+                // Continue with standard metadata fetch for additional info
+                self.fetchStandardMetadata(url: url, draft: draft, candidate: candidate, logger: logger, completion: completion)
+            }
+            return
+        }
+        
+        // Check if this is an Instagram URL - use oEmbed API
+        if url.host?.contains("instagram.com") == true {
+            logger.info("Detected Instagram URL, fetching via oEmbed API")
+            fetchInstagramOEmbed(url: url, logger: logger) { oembedResult in
+                if let result = oembedResult {
+                    draft.name = result.title
+                    lastFetchedCaption = result.title
+                    logger.info("Instagram oEmbed result - title: \(result.title ?? "nil")")
+                }
+                self.fetchStandardMetadata(url: url, draft: draft, candidate: candidate, logger: logger, completion: completion)
+            }
+            return
+        }
+        
+        // For non-social media URLs, go straight to standard fetch
+        fetchStandardMetadata(url: url, draft: draft, candidate: candidate, logger: logger, completion: completion)
+    }
+    
+    // MARK: - TikTok oEmbed API
+    private static func fetchTikTokOEmbed(url: URL, logger: Logger, completion: @escaping ((title: String?, authorName: String?)?) -> Void) {
+        // TikTok oEmbed endpoint
+        let oembedURL = "https://www.tiktok.com/oembed?url=\(url.absoluteString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+        
+        guard let requestURL = URL(string: oembedURL) else {
+            logger.warning("Failed to create TikTok oEmbed URL")
+            completion(nil)
+            return
+        }
+        
+        var request = URLRequest(url: requestURL)
+        request.timeoutInterval = 10
+        
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                logger.warning("TikTok oEmbed error: \(error.localizedDescription)")
+                completion(nil)
+                return
+            }
+            
+            guard let data = data else {
+                logger.warning("TikTok oEmbed returned no data")
+                completion(nil)
+                return
+            }
+            
+            do {
+                if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                    let title = json["title"] as? String
+                    let authorName = json["author_name"] as? String
+                    logger.info("TikTok oEmbed parsed - title: \(title ?? "nil"), author: \(authorName ?? "nil")")
+                    completion((title: title, authorName: authorName))
+                } else {
+                    logger.warning("TikTok oEmbed JSON parsing failed")
+                    completion(nil)
+                }
+            } catch {
+                logger.warning("TikTok oEmbed JSON error: \(error.localizedDescription)")
+                completion(nil)
+            }
+        }
+        task.resume()
+    }
+    
+    // MARK: - Instagram oEmbed API
+    private static func fetchInstagramOEmbed(url: URL, logger: Logger, completion: @escaping ((title: String?, authorName: String?)?) -> Void) {
+        // Instagram oEmbed endpoint (requires app token in production, but basic info works without)
+        let oembedURL = "https://api.instagram.com/oembed?url=\(url.absoluteString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+        
+        guard let requestURL = URL(string: oembedURL) else {
+            completion(nil)
+            return
+        }
+        
+        var request = URLRequest(url: requestURL)
+        request.timeoutInterval = 10
+        
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            guard let data = data, error == nil else {
+                completion(nil)
+                return
+            }
+            
+            do {
+                if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                    let title = json["title"] as? String
+                    let authorName = json["author_name"] as? String
+                    completion((title: title, authorName: authorName))
+                } else {
+                    completion(nil)
+                }
+            } catch {
+                completion(nil)
+            }
+        }
+        task.resume()
+    }
+    
+    // MARK: - Standard Metadata Fetch (moved from buildDraft)
+    private static func fetchStandardMetadata(url: URL, draft: ParsedSpotDraft, candidate: SharedCandidate, logger: Logger, completion: @escaping (ParsedSpotDraft) -> Void) {
+        var draft = draft
         
         // Fetch HTML and parse minimal OpenGraph title & image.
         logger.info("Fetching metadata for URL: \(url.absoluteString)")

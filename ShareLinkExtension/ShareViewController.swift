@@ -92,6 +92,12 @@ struct ShareRootView: View {
     @State private var alternatePlaces: [ResolvedPlace] = []
     @State private var showingAlternates = false
     @State private var extractedKeywords: [String] = []
+    @State private var customCategory: String = ""  // For user-created categories
+    
+    // Computed: do we have a confirmed location with coordinates?
+    private var hasConfirmedLocation: Bool {
+        !location.isEmpty && latitude != nil && longitude != nil
+    }
     
     var body: some View {
         NavigationView {
@@ -113,61 +119,50 @@ struct ShareRootView: View {
                         TextField("Name", text: $name)
                             .textInputAutocapitalization(.words)
                         
-                        AddressSearchView(
-                            address: $location,
-                            latitude: $latitude,
-                            longitude: $longitude
-                        )
-                        
-                        // Show alternate places if available and location is empty or confidence is low
-                        if !alternatePlaces.isEmpty && (location.isEmpty || categoryConfidence == .low) {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("Did you mean?")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                
-                                ForEach(alternatePlaces, id: \.address) { place in
-                                    Button(action: {
-                                        selectAlternatePlace(place)
-                                    }) {
-                                        HStack {
-                                            VStack(alignment: .leading, spacing: 2) {
-                                                Text(place.name)
-                                                    .font(.subheadline)
-                                                    .fontWeight(.medium)
-                                                    .foregroundColor(.primary)
-                                                Text(place.address)
-                                                    .font(.caption)
-                                                    .foregroundColor(.secondary)
-                                                    .lineLimit(1)
-                                            }
-                                            Spacer()
-                                            Image(systemName: "chevron.right")
-                                                .font(.caption)
-                                                .foregroundColor(.secondary)
-                                        }
-                                        .padding(.vertical, 4)
-                                    }
+                        // Location - NavigationLink to search subpage
+                        NavigationLink {
+                            LocationSearchView(
+                                selectedAddress: $location,
+                                selectedLatitude: $latitude,
+                                selectedLongitude: $longitude,
+                                suggestions: alternatePlaces
+                            )
+                        } label: {
+                            HStack {
+                                Text("Location")
+                                    .foregroundColor(.primary)
+                                Spacer()
+                                if hasConfirmedLocation {
+                                    Text(location)
+                                        .foregroundColor(.secondary)
+                                        .lineLimit(1)
+                                        .frame(maxWidth: 180, alignment: .trailing)
+                                } else {
+                                    Text("Add Location")
+                                        .foregroundColor(.secondary)
                                 }
                             }
-                            .padding(.vertical, 4)
                         }
                         
-                        // Category picker with confidence indicator
-                        HStack {
-                            Picker("Category", selection: $selectedContentType) {
-                                ForEach(ContentType.allCases, id: \.self) { type in
-                                    HStack {
-                                        Text(type.icon)
-                                            .font(.title2)
-                                            .frame(width: 25)
-                                        Text(type.rawValue)
-                                            .font(.body)
-                                    }
-                                    .tag(type)
+                        // Category - NavigationLink to category selection page
+                        NavigationLink {
+                            CategorySelectionView(
+                                selectedType: $selectedContentType,
+                                customCategory: $customCategory,
+                                suggestedKeywords: extractedKeywords,
+                                confidence: categoryConfidence
+                            )
+                        } label: {
+                            HStack {
+                                Text("Category")
+                                    .foregroundColor(.primary)
+                                Spacer()
+                                HStack(spacing: 4) {
+                                    Text(selectedContentType.icon)
+                                    Text(customCategory.isEmpty ? selectedContentType.rawValue : customCategory)
+                                        .foregroundColor(.secondary)
                                 }
                             }
-                            .pickerStyle(NavigationLinkPickerStyle())
                         }
                         
                         // Show why we suggested this category
@@ -285,21 +280,41 @@ struct ShareRootView: View {
         
         print("✅ [ShareRootView] Found \(attachments.count) attachment(s)")
         
+        // Check for attributed content text (often contains caption from social media apps)
+        if let attributedText = firstItem.attributedContentText {
+            print("📝 [ShareRootView] Found attributedContentText: \(attributedText.string)")
+        }
+        
+        // Check userInfo for additional data
+        if let userInfo = firstItem.userInfo {
+            print("📦 [ShareRootView] UserInfo keys: \(userInfo.keys)")
+            for (key, value) in userInfo {
+                print("📦 [ShareRootView] UserInfo[\(key)]: \(value)")
+            }
+        }
+        
         // Log all type identifiers for debugging
         for (index, provider) in attachments.enumerated() {
             let types = provider.registeredTypeIdentifiers
             print("📋 [ShareRootView] Attachment \(index + 1) types: \(types.joined(separator: ", "))")
         }
         
-        // Try to load URL first, then text
+        // Try to load ALL content types from ALL attachments
         var foundURL: URL?
         var foundText: String?
         let group = DispatchGroup()
         
-        // Try URL
-        for provider in attachments {
+        // First, check attributedContentText - social media apps often put caption here
+        if let attributedText = firstItem.attributedContentText?.string, !attributedText.isEmpty {
+            print("📝 [ShareRootView] Using attributedContentText as initial text: \(attributedText)")
+            foundText = attributedText
+        }
+        
+        // Load from ALL attachments - don't break early
+        for (index, provider) in attachments.enumerated() {
+            // Try URL type
             if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
-                print("🔗 [ShareRootView] Found URL type, loading...")
+                print("🔗 [ShareRootView] Attachment \(index+1) has URL type, loading...")
                 group.enter()
                 provider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { item, error in
                     defer { group.leave() }
@@ -311,22 +326,23 @@ struct ShareRootView: View {
                     
                     if let url = item as? URL {
                         print("✅ [ShareRootView] Loaded URL: \(url.absoluteString)")
-                        foundURL = url
+                        if foundURL == nil {
+                            foundURL = url
+                        }
                     } else if let urlString = item as? String, let url = URL(string: urlString) {
                         print("✅ [ShareRootView] Loaded URL from string: \(url.absoluteString)")
-                        foundURL = url
+                        if foundURL == nil {
+                            foundURL = url
+                        }
                     } else {
                         print("⚠️ [ShareRootView] URL item is unexpected type: \(type(of: item))")
                     }
                 }
-                break // Take first URL
             }
-        }
-        
-        // Also try to load plain text (for captions, etc.)
-        for provider in attachments {
+            
+            // Try plain text type
             if provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
-                print("📝 [ShareRootView] Found plain text type, loading...")
+                print("📝 [ShareRootView] Attachment \(index+1) has plain text type, loading...")
                 group.enter()
                 provider.loadItem(forTypeIdentifier: UTType.plainText.identifier, options: nil) { item, error in
                     defer { group.leave() }
@@ -337,8 +353,13 @@ struct ShareRootView: View {
                     }
                     
                     if let text = item as? String {
-                        print("✅ [ShareRootView] Loaded text: \(text.prefix(100))...")
-                        foundText = text
+                        print("✅ [ShareRootView] Loaded text (\(text.count) chars): \(text)")
+                        // Append to existing text or set it
+                        if let existing = foundText {
+                            foundText = existing + "\n" + text
+                        } else {
+                            foundText = text
+                        }
                         
                         // Try to extract URL from text if we don't have one
                         if foundURL == nil, let url = extractURL(from: text) {
@@ -346,15 +367,42 @@ struct ShareRootView: View {
                             foundURL = url
                         }
                     } else if let data = item as? Data, let text = String(data: data, encoding: .utf8) {
-                        print("✅ [ShareRootView] Loaded text from data: \(text.prefix(100))...")
-                        foundText = text
+                        print("✅ [ShareRootView] Loaded text from data (\(text.count) chars): \(text)")
+                        if let existing = foundText {
+                            foundText = existing + "\n" + text
+                        } else {
+                            foundText = text
+                        }
                         
                         if foundURL == nil, let url = extractURL(from: text) {
                             foundURL = url
                         }
                     }
                 }
-                break // Take first text
+            }
+            
+            // Also try UTType.text as fallback
+            if provider.hasItemConformingToTypeIdentifier(UTType.text.identifier) && 
+               !provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
+                print("📝 [ShareRootView] Attachment \(index+1) has text type, loading...")
+                group.enter()
+                provider.loadItem(forTypeIdentifier: UTType.text.identifier, options: nil) { item, error in
+                    defer { group.leave() }
+                    
+                    if let error = error {
+                        print("❌ [ShareRootView] Error loading text: \(error.localizedDescription)")
+                        return
+                    }
+                    
+                    if let text = item as? String {
+                        print("✅ [ShareRootView] Loaded text via UTType.text (\(text.count) chars): \(text)")
+                        if let existing = foundText {
+                            foundText = existing + "\n" + text
+                        } else {
+                            foundText = text
+                        }
+                    }
+                }
             }
         }
         
@@ -376,7 +424,7 @@ struct ShareRootView: View {
                     imageFileURL: nil
                 )
                 
-                // Fetch HTML metadata first
+                // Fetch HTML metadata first (this also fetches oEmbed for TikTok/Instagram)
                 MetadataFetcher.buildDraft(from: candidate, logger: self.logger) { draft in
                     // Now use ContentEnricher to enhance the results
                     var structuredCoords: (lat: Double, lon: Double)? = nil
@@ -384,11 +432,19 @@ struct ShareRootView: View {
                         structuredCoords = (lat, lon)
                     }
                     
+                    // Check if we got a caption from oEmbed (TikTok/Instagram)
+                    // The oEmbed caption is stored in MetadataFetcher.lastFetchedCaption
+                    let oembedCaption = MetadataFetcher.lastFetchedCaption
+                    print("📝 [ShareRootView] oEmbed caption: \(oembedCaption ?? "nil")")
+                    
+                    // Use oEmbed caption as text if we don't have other text
+                    let textToEnrich = foundText ?? oembedCaption
+                    
                     ContentEnricher.enrich(
                         url: url,
-                        text: foundText,
+                        text: textToEnrich,
                         htmlTitle: draft.name,
-                        htmlDescription: nil,
+                        htmlDescription: oembedCaption, // Pass oEmbed caption as description too
                         structuredAddress: draft.address,
                         structuredCoordinates: structuredCoords
                     ) { enriched in
@@ -529,11 +585,14 @@ struct ShareRootView: View {
     
     // MARK: - Save Spot
     private func saveSpot() {
+        // Use custom category if set, otherwise use selected type
+        let categoryToSave = customCategory.isEmpty ? selectedContentType.rawValue : customCategory
+        
         print("💾 [ShareRootView] Saving spot...")
         print("   Name: \(name)")
         print("   Location: \(location)")
         print("   URL: \(sourceURL)")
-        print("   Category: \(selectedContentType.rawValue)")
+        print("   Category: \(categoryToSave)")
         
         guard let defaults = UserDefaults(suiteName: "group.com.tamaraosseiran.clipboard") else {
             print("❌ [ShareRootView] Cannot access App Group")
@@ -546,10 +605,15 @@ struct ShareRootView: View {
             "name": name,
             "address": location,
             "sourceURL": sourceURL,
-            "contentType": selectedContentType.rawValue,
+            "contentType": categoryToSave,
             "notes": note,
             "createdAt": Date().timeIntervalSince1970
         ]
+        
+        // If using custom category, flag it for the main app to create if needed
+        if !customCategory.isEmpty {
+            spotData["isCustomCategory"] = true
+        }
         
         // Add coordinates if available
         if let lat = latitude, let lon = longitude {

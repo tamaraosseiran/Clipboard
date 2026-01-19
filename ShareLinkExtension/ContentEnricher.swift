@@ -277,11 +277,24 @@ enum ContentEnricher {
         
         switch sourceType {
         case .tiktok:
-            // TikTok shares often have the caption in the text
-            // Format can be: "Caption text... https://vm.tiktok.com/..."
-            // Or just the URL with caption in a separate field
-            if let text = text, !text.isEmpty {
-                logger.info("TikTok - processing text: \(text.prefix(200))")
+            // TikTok shares ONLY the URL - no caption in the share data
+            // The caption comes from oEmbed API and is passed as htmlDescription
+            logger.info("TikTok - htmlDescription (oEmbed caption): \(htmlDescription ?? "nil")")
+            logger.info("TikTok - text: \(text ?? "nil")")
+            
+            // Prioritize oEmbed caption (htmlDescription) since TikTok doesn't share text
+            let captionSource = htmlDescription ?? text
+            
+            if let caption = captionSource, !caption.isEmpty {
+                logger.info("TikTok - processing caption: \(caption.prefix(200))")
+                
+                // Try to extract a place name from the caption
+                let placeName = extractPlaceNameFromCaption(caption)
+                logger.info("TikTok - extracted place name: \(placeName ?? "nil")")
+                name = placeName ?? cleanCaption(caption)
+                notes = caption
+            } else if let text = text, !text.isEmpty {
+                logger.info("TikTok - fallback to text: \(text.prefix(200))")
                 let (caption, _) = extractCaptionAndURL(from: text)
                 logger.info("TikTok - extracted caption: \(caption ?? "nil")")
                 
