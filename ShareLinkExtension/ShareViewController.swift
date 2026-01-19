@@ -87,6 +87,12 @@ struct ShareRootView: View {
     @State private var errorMessage: String?
     @State private var hasContent = false
     
+    // New: enrichment-related state
+    @State private var categoryConfidence: EnrichedContent.CategoryConfidence = .low
+    @State private var alternatePlaces: [ResolvedPlace] = []
+    @State private var showingAlternates = false
+    @State private var extractedKeywords: [String] = []
+    
     var body: some View {
         NavigationView {
             if isLoading {
@@ -113,19 +119,68 @@ struct ShareRootView: View {
                             longitude: $longitude
                         )
                         
-                        Picker("Category", selection: $selectedContentType) {
-                            ForEach(ContentType.allCases, id: \.self) { type in
-                                HStack {
-                                    Text(type.icon)
-                                        .font(.title2)
-                                        .frame(width: 25)
-                                    Text(type.rawValue)
-                                        .font(.body)
+                        // Show alternate places if available and location is empty or confidence is low
+                        if !alternatePlaces.isEmpty && (location.isEmpty || categoryConfidence == .low) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Did you mean?")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                
+                                ForEach(alternatePlaces, id: \.address) { place in
+                                    Button(action: {
+                                        selectAlternatePlace(place)
+                                    }) {
+                                        HStack {
+                                            VStack(alignment: .leading, spacing: 2) {
+                                                Text(place.name)
+                                                    .font(.subheadline)
+                                                    .fontWeight(.medium)
+                                                    .foregroundColor(.primary)
+                                                Text(place.address)
+                                                    .font(.caption)
+                                                    .foregroundColor(.secondary)
+                                                    .lineLimit(1)
+                                            }
+                                            Spacer()
+                                            Image(systemName: "chevron.right")
+                                                .font(.caption)
+                                                .foregroundColor(.secondary)
+                                        }
+                                        .padding(.vertical, 4)
+                                    }
                                 }
-                                .tag(type)
+                            }
+                            .padding(.vertical, 4)
+                        }
+                        
+                        // Category picker with confidence indicator
+                        HStack {
+                            Picker("Category", selection: $selectedContentType) {
+                                ForEach(ContentType.allCases, id: \.self) { type in
+                                    HStack {
+                                        Text(type.icon)
+                                            .font(.title2)
+                                            .frame(width: 25)
+                                        Text(type.rawValue)
+                                            .font(.body)
+                                    }
+                                    .tag(type)
+                                }
+                            }
+                            .pickerStyle(NavigationLinkPickerStyle())
+                        }
+                        
+                        // Show why we suggested this category
+                        if categoryConfidence == .high && !extractedKeywords.isEmpty {
+                            HStack(spacing: 4) {
+                                Image(systemName: "sparkles")
+                                    .font(.caption2)
+                                    .foregroundColor(.blue)
+                                Text("Suggested based on: \(extractedKeywords.prefix(3).joined(separator: ", "))")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
                             }
                         }
-                        .pickerStyle(NavigationLinkPickerStyle())
                         
                         if !sourceURL.isEmpty {
                             VStack(alignment: .leading, spacing: 4) {
@@ -133,17 +188,17 @@ struct ShareRootView: View {
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                                 Text(sourceURL)
-                                            .font(.footnote)
+                                    .font(.footnote)
                                     .foregroundColor(.secondary)
-                                            .lineLimit(2)
-                                    }
-                                }
+                                    .lineLimit(2)
                             }
+                        }
+                    }
                     
                     Section(header: Text("Notes")) {
                         TextField("Note", text: $note, axis: .vertical)
                             .lineLimit(3...6)
-                        }
+                    }
                         
                     if let error = errorMessage {
                         Section {
@@ -154,9 +209,9 @@ struct ShareRootView: View {
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
-                            }
                         }
                     }
+                }
                     .navigationTitle("Add to Spots")
                     .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
@@ -183,7 +238,19 @@ struct ShareRootView: View {
         }
     }
     
-    // MARK: - Parse Content (Simplified, Direct Approach)
+    // MARK: - Select Alternate Place
+    private func selectAlternatePlace(_ place: ResolvedPlace) {
+        print("🔵 [ShareRootView] Selected alternate place: \(place.name)")
+        self.name = place.name
+        self.location = place.address
+        self.latitude = place.latitude
+        self.longitude = place.longitude
+        
+        // Clear alternates since user made a selection
+        self.alternatePlaces = []
+    }
+    
+    // MARK: - Parse Content (Enhanced with ContentEnricher)
     private func parseContent() {
         print("🔵 [ShareRootView] parseContent() called")
         guard let ctx = context else {
@@ -209,7 +276,7 @@ struct ShareRootView: View {
         
         guard let attachments = firstItem.attachments, !attachments.isEmpty else {
             print("❌ [ShareRootView] No attachments found")
-                        DispatchQueue.main.async {
+            DispatchQueue.main.async {
                 errorMessage = "No attachments in shared content"
                 isLoading = false
             }
@@ -256,52 +323,52 @@ struct ShareRootView: View {
             }
         }
         
-        // Try plain text (if no URL found or as fallback)
-        if foundURL == nil {
-            for provider in attachments {
-                if provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
-                    print("📝 [ShareRootView] Found plain text type, loading...")
-                    group.enter()
-                    provider.loadItem(forTypeIdentifier: UTType.plainText.identifier, options: nil) { item, error in
-                        defer { group.leave() }
+        // Also try to load plain text (for captions, etc.)
+        for provider in attachments {
+            if provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
+                print("📝 [ShareRootView] Found plain text type, loading...")
+                group.enter()
+                provider.loadItem(forTypeIdentifier: UTType.plainText.identifier, options: nil) { item, error in
+                    defer { group.leave() }
+                    
+                    if let error = error {
+                        print("❌ [ShareRootView] Error loading text: \(error.localizedDescription)")
+                        return
+                    }
+                    
+                    if let text = item as? String {
+                        print("✅ [ShareRootView] Loaded text: \(text.prefix(100))...")
+                        foundText = text
                         
-                        if let error = error {
-                            print("❌ [ShareRootView] Error loading text: \(error.localizedDescription)")
-                            return
+                        // Try to extract URL from text if we don't have one
+                        if foundURL == nil, let url = extractURL(from: text) {
+                            print("✅ [ShareRootView] Extracted URL from text: \(url.absoluteString)")
+                            foundURL = url
                         }
+                    } else if let data = item as? Data, let text = String(data: data, encoding: .utf8) {
+                        print("✅ [ShareRootView] Loaded text from data: \(text.prefix(100))...")
+                        foundText = text
                         
-                        if let text = item as? String {
-                            print("✅ [ShareRootView] Loaded text: \(text.prefix(100))...")
-                            foundText = text
-                            
-                            // Try to extract URL from text
-                            if let url = extractURL(from: text) {
-                                print("✅ [ShareRootView] Extracted URL from text: \(url.absoluteString)")
-                                foundURL = url
-                            }
-                        } else if let data = item as? Data, let text = String(data: data, encoding: .utf8) {
-                            print("✅ [ShareRootView] Loaded text from data: \(text.prefix(100))...")
-                            foundText = text
-                            
-                            if let url = extractURL(from: text) {
-                                foundURL = url
-                            }
+                        if foundURL == nil, let url = extractURL(from: text) {
+                            foundURL = url
                         }
                     }
-                    break // Take first text
                 }
+                break // Take first text
             }
         }
         
         // Wait for async loads to complete
         group.notify(queue: .main) {
             print("🔵 [ShareRootView] All loads completed")
+            print("🔵 [ShareRootView] URL: \(foundURL?.absoluteString ?? "nil"), Text: \(foundText?.prefix(50) ?? "nil")...")
             
-            // If we found a URL, fetch metadata using MetadataFetcher
             if let url = foundURL {
                 self.sourceURL = url.absoluteString
-                
-                // Create a SharedCandidate for MetadataFetcher
+            }
+            
+            // First fetch HTML metadata if we have a URL
+            if let url = foundURL {
                 let candidate = SharedCandidate(
                     sourceURL: url,
                     rawText: foundText,
@@ -309,76 +376,103 @@ struct ShareRootView: View {
                     imageFileURL: nil
                 )
                 
-                // Fetch metadata asynchronously
+                // Fetch HTML metadata first
                 MetadataFetcher.buildDraft(from: candidate, logger: self.logger) { draft in
-                    DispatchQueue.main.async {
-                        // Update UI with fetched metadata
-                        if let fetchedName = draft.name, !fetchedName.isEmpty {
-                            self.name = fetchedName
-                        } else {
-                            // Fallback to URL-based name
-                            self.name = url.host ?? (url.lastPathComponent.isEmpty ? "Shared Link" : url.lastPathComponent)
-                            if self.name.isEmpty {
-                                self.name = "Shared Link"
-                            }
+                    // Now use ContentEnricher to enhance the results
+                    var structuredCoords: (lat: Double, lon: Double)? = nil
+                    if let lat = draft.latitude, let lon = draft.longitude {
+                        structuredCoords = (lat, lon)
+                    }
+                    
+                    ContentEnricher.enrich(
+                        url: url,
+                        text: foundText,
+                        htmlTitle: draft.name,
+                        htmlDescription: nil,
+                        structuredAddress: draft.address,
+                        structuredCoordinates: structuredCoords
+                    ) { enriched in
+                        DispatchQueue.main.async {
+                            self.applyEnrichedContent(enriched)
                         }
-                        
-                        if let fetchedAddress = draft.address, !fetchedAddress.isEmpty {
-                            self.location = fetchedAddress
-                            // Geocode the address to get coordinates
-                            self.geocodeAddress(fetchedAddress)
-                        } else {
-                            // Try to extract address from URL or text
-                            if let text = foundText {
-                                self.location = self.extractAddressFromText(text) ?? ""
-                            }
-                        }
-                        
-                        // Store coordinates if available
-                        if let lat = draft.latitude, let lon = draft.longitude {
-                            self.latitude = lat
-                            self.longitude = lon
-                        }
-                        
-                        self.isLoading = false
-                        self.hasContent = true
-                        print("✅ [ShareRootView] UI updated with metadata: \(self.name)")
                     }
                 }
             } else if let text = foundText {
-                // No URL, just text - try to extract address
-                self.name = "Shared Text"
-                if let address = self.extractAddressFromText(text) {
-                    self.location = address
-                    self.geocodeAddress(address)
-                } else {
-                    self.location = text
+                // No URL, just text - use ContentEnricher directly
+                ContentEnricher.enrich(
+                    url: nil,
+                    text: text,
+                    htmlTitle: nil,
+                    htmlDescription: nil,
+                    structuredAddress: nil,
+                    structuredCoordinates: nil
+                ) { enriched in
+                    DispatchQueue.main.async {
+                        self.applyEnrichedContent(enriched)
+                    }
                 }
-                self.isLoading = false
-                self.hasContent = true
-                print("✅ [ShareRootView] UI updated with text")
             } else {
                 // No content found
                 self.isLoading = false
                 self.hasContent = true
                 print("⚠️ [ShareRootView] No URL or text found - showing empty form")
-                if self.name.isEmpty {
-                    self.name = ""
-                }
             }
         }
         
-        // Timeout after 3 seconds - always show form
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+        // Timeout after 5 seconds - always show form (increased from 3s for enrichment)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
             if self.isLoading {
                 print("⏱️ [ShareRootView] Parse timeout - showing form anyway")
                 self.isLoading = false
                 self.hasContent = true
-                if self.name.isEmpty {
-                    self.name = ""
-                }
             }
         }
+    }
+    
+    // MARK: - Apply Enriched Content to UI
+    private func applyEnrichedContent(_ enriched: EnrichedContent) {
+        print("✅ [ShareRootView] Applying enriched content")
+        print("   Name: \(enriched.name)")
+        print("   Category: \(enriched.suggestedCategory.rawValue) (confidence: \(enriched.categoryConfidence))")
+        print("   Primary place: \(enriched.primaryPlace?.name ?? "none")")
+        print("   Alternates: \(enriched.alternatePlaces.count)")
+        
+        // Apply name
+        self.name = enriched.name
+        
+        // Apply notes
+        if let notes = enriched.notes, !notes.isEmpty {
+            self.note = notes
+        }
+        
+        // Apply category
+        self.selectedContentType = enriched.suggestedCategory
+        self.categoryConfidence = enriched.categoryConfidence
+        self.extractedKeywords = enriched.extractedKeywords
+        
+        // Apply primary place
+        if let place = enriched.primaryPlace {
+            self.location = place.address
+            self.latitude = place.latitude
+            self.longitude = place.longitude
+            
+            // Use place name if it's better than what we have
+            if place.name.count > enriched.name.count && !place.name.lowercased().contains("shared") {
+                self.name = place.name
+            }
+        }
+        
+        // Store alternates for user selection
+        self.alternatePlaces = enriched.alternatePlaces
+        
+        // Apply source URL
+        if let sourceURL = enriched.sourceURL {
+            self.sourceURL = sourceURL
+        }
+        
+        self.isLoading = false
+        self.hasContent = true
+        print("✅ [ShareRootView] UI updated with enriched content")
     }
     
     // MARK: - Extract URL from text
