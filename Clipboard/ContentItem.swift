@@ -10,17 +10,18 @@ import SwiftData
 
 @Model
 final class ContentItem {
-    var title: String
+    var title: String = ""
     var itemDescription: String?
     var url: String?
-    var contentTypeString: String // Store as string for SwiftData
-    var location: Location?
+    var contentTypeString: String = "Other"
+    @Relationship(deleteRule: .cascade) var location: Location?
     var rating: Double?
-    var isVisited: Bool
-    var isFavorite: Bool
+    var isVisited: Bool = false
+    var isFavorite: Bool = false
     var notes: String?
-    var tags: [String]
-    var createdAt: Date
+    // Store tags as a comma-separated string to avoid SwiftData array issues
+    var tagsString: String = ""
+    var createdAt: Date = Date()
     
     init(
         title: String,
@@ -43,7 +44,7 @@ final class ContentItem {
         self.isVisited = isVisited
         self.isFavorite = isFavorite
         self.notes = notes
-        self.tags = tags
+        self.tagsString = tags.joined(separator: ",")
         self.createdAt = Date()
     }
     
@@ -53,6 +54,15 @@ final class ContentItem {
         }
         set {
             contentTypeString = newValue.rawValue
+        }
+    }
+    
+    var tags: [String] {
+        get {
+            tagsString.isEmpty ? [] : tagsString.components(separatedBy: ",")
+        }
+        set {
+            tagsString = newValue.joined(separator: ",")
         }
     }
 }

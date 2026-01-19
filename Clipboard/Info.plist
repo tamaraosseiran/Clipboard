@@ -53,6 +53,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>clipboard</string>
+				<string>spots</string>
 			</array>
 		</dict>
 	</array>

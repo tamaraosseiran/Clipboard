@@ -11,14 +11,14 @@ import CoreLocation
 
 @Model
 final class Location {
-    var latitude: Double
-    var longitude: Double
+    var latitude: Double = 0.0
+    var longitude: Double = 0.0
     var address: String?
     var city: String?
     var state: String?
     var country: String?
     
-    init(latitude: Double, longitude: Double, address: String? = nil, city: String? = nil, state: String? = nil, country: String? = nil) {
+    init(latitude: Double = 0.0, longitude: Double = 0.0, address: String? = nil, city: String? = nil, state: String? = nil, country: String? = nil) {
         self.latitude = latitude
         self.longitude = longitude
         self.address = address

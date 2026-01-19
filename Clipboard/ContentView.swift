@@ -185,25 +185,9 @@ struct ContentView: View {
     }
     
     private func setupNotificationObserver() {
-        // Listen for app becoming active
-        NotificationCenter.default.addObserver(
-            forName: UIApplication.didBecomeActiveNotification,
-            object: nil,
-            queue: .main
-        ) { [self] _ in
-            print("📱 App became active, checking for shared content...")
-            checkForSharedContent()
-        }
-        
-        // Listen for manual check request (from URL scheme)
-        NotificationCenter.default.addObserver(
-            forName: NSNotification.Name("CheckForSharedContent"),
-            object: nil,
-            queue: .main
-        ) { [self] _ in
-            print("📱 Manual check requested, checking for shared content...")
-            checkForSharedContent()
-        }
+        // Note: These observers are set up each time the view appears.
+        // In a production app, you'd want to manage these more carefully.
+        // The .onReceive modifiers in the view body are preferred for SwiftUI.
     }
     
     private func testAppGroupAccess() {

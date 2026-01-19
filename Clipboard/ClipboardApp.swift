@@ -16,12 +16,50 @@ struct ClipboardApp: App {
             Location.self,
             Category.self,
         ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
+        
+        // First, try to create a persistent store
         do {
+            let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
-            fatalError("Could not create ModelContainer: \(error)")
+            print("❌ Could not create persistent ModelContainer: \(error)")
+            print("🔄 Attempting to reset database...")
+            
+            // Try to delete the existing store files
+            let fileManager = FileManager.default
+            if let appSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
+                // Delete all possible SwiftData/CoreData files
+                let filesToDelete = [
+                    "default.store",
+                    "default.store-shm",
+                    "default.store-wal",
+                    "Model.sqlite",
+                    "Model.sqlite-shm",
+                    "Model.sqlite-wal"
+                ]
+                for file in filesToDelete {
+                    let fileURL = appSupport.appendingPathComponent(file)
+                    try? fileManager.removeItem(at: fileURL)
+                }
+            }
+            
+            // Try again with persistent store after cleanup
+            do {
+                let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+                return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            } catch {
+                print("❌ Still failed after reset: \(error)")
+                print("⚠️ Falling back to in-memory store (data will not persist)")
+                
+                // Last resort: use in-memory store so the app at least launches
+                do {
+                    let inMemoryConfig = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+                    return try ModelContainer(for: schema, configurations: [inMemoryConfig])
+                } catch {
+                    // This should never happen, but if it does, there's a fundamental issue with the models
+                    fatalError("Could not create even an in-memory ModelContainer: \(error)")
+                }
+            }
         }
     }()
 
