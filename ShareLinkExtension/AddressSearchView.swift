@@ -198,9 +198,9 @@ struct LocationSearchView: View {
             parts.append(name)
         }
         
-        // Note: placemark is deprecated in iOS 26.0, but MKAddress has different structure
-        // We continue using placemark as it's the most reliable way to get address components
-        // TODO: Migrate to MKAddress when its API is better documented
+        // Use placemark (deprecated in iOS 26 but still functional and reliable)
+        // Note: Apple recommends using addressRepresentations, but the API is not fully documented
+        // and placemark continues to work reliably for address formatting
         let placemark = mapItem.placemark
         if let thoroughfare = placemark.thoroughfare {
             if let subThoroughfare = placemark.subThoroughfare {
@@ -298,7 +298,6 @@ struct AddressSearchView: View {
             if let mapItem = response?.mapItems.first {
                 var location: CLLocation?
                 
-                // Try placemark.location first (iOS < 26)
                 // Note: placemark is deprecated in iOS 26.0, but still functional
                 if #available(iOS 26.0, *) {
                     // Use new API for iOS 26+
@@ -340,4 +339,3 @@ class AddressSearchDelegate: NSObject, MKLocalSearchCompleterDelegate {
         print("⚠️ [AddressSearchView] Search completer error: \(error.localizedDescription)")
     }
 }
-
