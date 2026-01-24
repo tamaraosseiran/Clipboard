@@ -193,13 +193,15 @@ struct LocationSearchView: View {
     }
     
     private func formatAddress(from mapItem: MKMapItem) -> String? {
-        // Note: placemark is deprecated in iOS 26.0 but still functional
-        let placemark = mapItem.placemark
-        
         var parts: [String] = []
         if let name = mapItem.name {
             parts.append(name)
         }
+        
+        // Note: placemark is deprecated in iOS 26.0, but MKAddress has different structure
+        // We continue using placemark as it's the most reliable way to get address components
+        // TODO: Migrate to MKAddress when its API is better documented
+        let placemark = mapItem.placemark
         if let thoroughfare = placemark.thoroughfare {
             if let subThoroughfare = placemark.subThoroughfare {
                 parts.append("\(subThoroughfare) \(thoroughfare)")

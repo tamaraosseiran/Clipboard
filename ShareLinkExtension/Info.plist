@@ -22,6 +22,8 @@
 	<string>Save places from social media and the web</string>
 	<key>NSExtensionIconName</key>
 	<string>ShareLinkExtensionIcon</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>We transcribe video audio to extract place names and descriptions</string>
 	<key>NSExtension</key>
 	<dict>
 		<key>NSExtensionAttributes</key>

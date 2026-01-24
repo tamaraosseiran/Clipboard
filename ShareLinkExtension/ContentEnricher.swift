@@ -77,34 +77,65 @@ enum ContentEnricher {
             sourceType: sourceType
         )
         
-        // Step 3: Extract potential place names from all text content
+        // Step 3: Extract business name and address separately
         let allText = [extractedName, extractedNotes, text, htmlTitle, htmlDescription]
             .compactMap { $0 }
             .joined(separator: " ")
         
-        var potentialPlaceNames = extractPlaceNames(from: allText)
-        logger.info("Extracted potential place names: \(potentialPlaceNames)")
+        // Extract business name (if not already extracted)
+        var businessName = extractedName
+        if businessName == "Shared Spot" || businessName.isEmpty {
+            if let extractedBusinessName = extractBusinessName(from: allText) {
+                businessName = extractedBusinessName
+                logger.info("Extracted business name: \(businessName)")
+            }
+        }
         
-        // Step 3b: Use NLP for comprehensive entity extraction
+        // Extract address from text (look for addresses, location pins, etc.)
+        var extractedAddress: String? = nil
+        let addressPatterns = [
+            // Location pin with address: "📍 4205 Buena Vista"
+            #"📍\s*([0-9]+\s+[A-Za-z0-9\s]+)"#,
+            // Standard address pattern: "4205 Buena Vista St"
+            #"\b([0-9]+\s+[A-Za-z0-9\s]+(?:St|Street|Ave|Avenue|Rd|Road|Blvd|Boulevard|Dr|Drive|Ln|Lane|Way|Ct|Court|Pl|Place))\b"#,
+        ]
+        
+        for pattern in addressPatterns {
+            if let match = firstMatch(in: allText, pattern: pattern) {
+                let cleaned = match.trimmingCharacters(in: .whitespacesAndNewlines)
+                if cleaned.count >= 5 && cleaned.prefix(1).allSatisfy({ $0.isNumber }) {
+                    extractedAddress = cleaned
+                    logger.info("Extracted address: \(extractedAddress ?? "nil")")
+                    break
+                }
+            }
+        }
+        
+        // Also use NSDataDetector for addresses
+        if extractedAddress == nil {
+            if let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.address.rawValue) {
+                let range = NSRange(allText.startIndex..., in: allText)
+                let matches = detector.matches(in: allText, options: [], range: range)
+                if let firstMatch = matches.first,
+                   let swiftRange = Range(firstMatch.range, in: allText) {
+                    extractedAddress = String(allText[swiftRange])
+                    logger.info("Extracted address via NSDataDetector: \(extractedAddress ?? "nil")")
+                }
+            }
+        }
+        
+        // Extract location hint for search refinement
         let textForNLP = text ?? extractedNotes ?? ""
         var locationHint: String? = nil
         
         if !textForNLP.isEmpty {
             if let nlpEntities = extractEntitiesUsingNLP(from: textForNLP) {
-                // If NLP found an organization and we don't have a good name yet, use it
-                if let orgName = nlpEntities.organizationName, 
-                   (extractedName == "Shared Spot" || potentialPlaceNames.isEmpty) {
-                    potentialPlaceNames.insert(orgName, at: 0)
-                    logger.info("Added NLP organization to search: \(orgName)")
-                }
-                
-                // Use NLP places as location hint
-                // Filter to get city/location (not the business name)
+                // Use NLP places as location hint (cities, not business names)
                 let cityHints = nlpEntities.allPlaces.filter { place in
-                    // Exclude if it matches the organization name
-                    if let org = nlpEntities.organizationName {
-                        return !place.lowercased().contains(org.lowercased()) &&
-                               !org.lowercased().contains(place.lowercased())
+                    // Exclude if it matches the business name
+                    if !businessName.isEmpty {
+                        return !place.lowercased().contains(businessName.lowercased()) &&
+                               !businessName.lowercased().contains(place.lowercased())
                     }
                     return true
                 }
@@ -177,16 +208,129 @@ enum ContentEnricher {
                     completion(result)
                 }
             }
-        } else if !potentialPlaceNames.isEmpty || locationHint != nil {
-            // Search for places using extracted names + location hint
-            var searchQuery = potentialPlaceNames.first ?? extractedName
-            
-            // Append location hint to improve search accuracy
+        } else {
+            // Smart place resolution: connect business name with address
+            resolvePlaceWithNameAndAddress(
+                businessName: businessName,
+                address: extractedAddress,
+                locationHint: locationHint,
+                extractedName: extractedName,
+                extractedNotes: extractedNotes,
+                category: category,
+                confidence: confidence,
+                keywords: keywords,
+                url: url,
+                completion: completion
+            )
+        }
+    }
+    
+    // MARK: - Smart Place Resolution
+    
+    /// Intelligently connects business names with addresses
+    /// - If we have business name but no address: search for name, get address from result
+    /// - If we have address but no business name: search for address, get name from result
+    /// - If we have both: search with both for best match
+    private static func resolvePlaceWithNameAndAddress(
+        businessName: String,
+        address: String?,
+        locationHint: String?,
+        extractedName: String,
+        extractedNotes: String?,
+        category: ContentType,
+        confidence: EnrichedContent.CategoryConfidence,
+        keywords: [String],
+        url: URL?,
+        completion: @escaping (EnrichedContent) -> Void
+    ) {
+        let hasBusinessName = !businessName.isEmpty && businessName != "Shared Spot"
+        let hasAddress = address != nil && !address!.isEmpty
+        
+        logger.info("🔍 Smart place resolution:")
+        logger.info("   Business name: \(hasBusinessName ? businessName : "none")")
+        logger.info("   Address: \(hasAddress ? address! : "none")")
+        logger.info("   Location hint: \(locationHint ?? "none")")
+        
+        if hasBusinessName && hasAddress {
+            // We have both - search with both for best match
+            var searchQuery = "\(businessName) \(address!)"
             if let hint = locationHint {
                 searchQuery = "\(searchQuery), \(hint)"
             }
+            logger.info("   Strategy: Search with both name and address")
+            logger.info("   Query: \(searchQuery)")
             
-            logger.info("Searching for place: \(searchQuery)")
+            searchPlaces(query: searchQuery, near: nil) { places in
+                // Use business name from search result if available, otherwise use extracted
+                let finalName = places.first?.name ?? businessName
+                let result = EnrichedContent(
+                    name: finalName,
+                    notes: extractedNotes,
+                    suggestedCategory: category,
+                    categoryConfidence: confidence,
+                    primaryPlace: places.first,
+                    alternatePlaces: Array(places.dropFirst().prefix(3)),
+                    sourceURL: url?.absoluteString,
+                    extractedKeywords: keywords
+                )
+                completion(result)
+            }
+        } else if hasBusinessName {
+            // We have business name but no address - search for name, get address from result
+            var searchQuery = businessName
+            if let hint = locationHint {
+                searchQuery = "\(searchQuery), \(hint)"
+            }
+            logger.info("   Strategy: Search for business name to get address")
+            logger.info("   Query: \(searchQuery)")
+            
+            searchPlaces(query: searchQuery, near: nil) { places in
+                // Use business name from search result if it's better, otherwise use extracted
+                let finalName = places.first?.name ?? businessName
+                let result = EnrichedContent(
+                    name: finalName,
+                    notes: extractedNotes,
+                    suggestedCategory: category,
+                    categoryConfidence: confidence,
+                    primaryPlace: places.first, // This will have the address
+                    alternatePlaces: Array(places.dropFirst().prefix(3)),
+                    sourceURL: url?.absoluteString,
+                    extractedKeywords: keywords
+                )
+                completion(result)
+            }
+        } else if hasAddress {
+            // We have address but no business name - search for address, get name from result
+            var searchQuery = address!
+            if let hint = locationHint {
+                searchQuery = "\(searchQuery), \(hint)"
+            }
+            logger.info("   Strategy: Search for address to get business name")
+            logger.info("   Query: \(searchQuery)")
+            
+            searchPlaces(query: searchQuery, near: nil) { places in
+                // Use business name from search result
+                let finalName = places.first?.name ?? extractedName
+                let result = EnrichedContent(
+                    name: finalName,
+                    notes: extractedNotes,
+                    suggestedCategory: category,
+                    categoryConfidence: confidence,
+                    primaryPlace: places.first,
+                    alternatePlaces: Array(places.dropFirst().prefix(3)),
+                    sourceURL: url?.absoluteString,
+                    extractedKeywords: keywords
+                )
+                completion(result)
+            }
+        } else {
+            // No business name or address - try generic search with extracted name
+            var searchQuery = extractedName
+            if let hint = locationHint {
+                searchQuery = "\(searchQuery), \(hint)"
+            }
+            logger.info("   Strategy: Generic search with extracted name")
+            logger.info("   Query: \(searchQuery)")
             
             searchPlaces(query: searchQuery, near: nil) { places in
                 let result = EnrichedContent(
@@ -201,19 +345,6 @@ enum ContentEnricher {
                 )
                 completion(result)
             }
-        } else {
-            // No place info - return what we have
-            let result = EnrichedContent(
-                name: extractedName,
-                notes: extractedNotes,
-                suggestedCategory: category,
-                categoryConfidence: confidence,
-                primaryPlace: nil,
-                alternatePlaces: [],
-                sourceURL: url?.absoluteString,
-                extractedKeywords: keywords
-            )
-            completion(result)
         }
     }
     
@@ -288,10 +419,18 @@ enum ContentEnricher {
             if let caption = captionSource, !caption.isEmpty {
                 logger.info("TikTok - processing caption: \(caption.prefix(200))")
                 
-                // Try to extract a place name from the caption
-                let placeName = extractPlaceNameFromCaption(caption)
-                logger.info("TikTok - extracted place name: \(placeName ?? "nil")")
-                name = placeName ?? cleanCaption(caption)
+                // First, try to extract business name (not address) from the caption
+                let businessName = extractBusinessName(from: caption)
+                logger.info("TikTok - extracted business name: \(businessName ?? "nil")")
+                
+                // If we found a business name, use it; otherwise try place name extraction
+                if let businessName = businessName {
+                    name = businessName
+                } else {
+                    let placeName = extractPlaceNameFromCaption(caption)
+                    logger.info("TikTok - extracted place name: \(placeName ?? "nil")")
+                    name = placeName ?? cleanCaption(caption)
+                }
                 notes = caption
             } else if let text = text, !text.isEmpty {
                 logger.info("TikTok - fallback to text: \(text.prefix(200))")
@@ -299,22 +438,33 @@ enum ContentEnricher {
                 logger.info("TikTok - extracted caption: \(caption ?? "nil")")
                 
                 if let caption = caption, !caption.isEmpty {
-                    // Try to extract a place name from the caption
-                    let placeName = extractPlaceNameFromCaption(caption)
-                    logger.info("TikTok - extracted place name: \(placeName ?? "nil")")
-                    name = placeName ?? cleanCaption(caption)
+                    // Try to extract business name first
+                    let businessName = extractBusinessName(from: caption)
+                    if let businessName = businessName {
+                        name = businessName
+                    } else {
+                        let placeName = extractPlaceNameFromCaption(caption)
+                        logger.info("TikTok - extracted place name: \(placeName ?? "nil")")
+                        name = placeName ?? cleanCaption(caption)
+                    }
                     notes = caption
                 } else {
                     // The entire text might be the caption (no URL extracted)
                     // This happens when TikTok shares text and URL separately
-                    let placeName = extractPlaceNameFromCaption(text)
-                    if let placeName = placeName {
-                        name = placeName
+                    let businessName = extractBusinessName(from: text)
+                    if let businessName = businessName {
+                        name = businessName
                         notes = text
-                    } else if !text.lowercased().contains("tiktok") {
-                        // Use the text as caption if it doesn't look like a URL
-                        name = cleanCaption(text)
-                        notes = text
+                    } else {
+                        let placeName = extractPlaceNameFromCaption(text)
+                        if let placeName = placeName {
+                            name = placeName
+                            notes = text
+                        } else if !text.lowercased().contains("tiktok") {
+                            // Use the text as caption if it doesn't look like a URL
+                            name = cleanCaption(text)
+                            notes = text
+                        }
                     }
                 }
             }
@@ -331,8 +481,14 @@ enum ContentEnricher {
             if let text = text {
                 let (caption, _) = extractCaptionAndURL(from: text)
                 if let caption = caption, !caption.isEmpty {
-                    let placeName = extractPlaceNameFromCaption(caption)
-                    name = placeName ?? cleanCaption(caption)
+                    // Try to extract business name first
+                    let businessName = extractBusinessName(from: caption)
+                    if let businessName = businessName {
+                        name = businessName
+                    } else {
+                        let placeName = extractPlaceNameFromCaption(caption)
+                        name = placeName ?? cleanCaption(caption)
+                    }
                     notes = caption
                 }
             } else if let htmlTitle = htmlTitle, !isGenericTitle(htmlTitle, for: .instagram) {
@@ -474,30 +630,46 @@ enum ContentEnricher {
         
         // PRIORITY 1: Look for 📍 pin emoji pattern - very common in TikTok/Instagram
         // Format: "📍place name" or "📍 place name - city" or "📍place name, city"
+        // NOTE: This often contains addresses, so we need to distinguish business names from addresses
         let pinPatterns = [
-            // 📍 followed by place name, then dash and location
+            // 📍 followed by place name, then dash and location (e.g., "📍childish bakery - carrollton, tx")
             #"📍\s*([^-–—\n]+?)(?:\s*[-–—]\s*[A-Za-z\s,]+)?$"#,
             // 📍 followed by place name until end or newline
             #"📍\s*(.+?)(?:\n|$)"#,
+            // 📍 at any position in caption (not just end)
+            #"📍\s*([A-Za-z0-9][A-Za-z0-9'&\-\s]{2,50}?)(?:\s*[-–—]\s*[A-Za-z\s,]+|,|\n|$)"#,
         ]
         
         for pattern in pinPatterns {
             if let match = firstMatch(in: caption, pattern: pattern) {
                 var cleaned = match.trimmingCharacters(in: .whitespacesAndNewlines)
-                // Remove trailing location after dash if present
+                // Remove trailing location after dash if present (e.g., "childish bakery - carrollton, tx" -> "childish bakery")
                 if let dashRange = cleaned.range(of: " - ") {
                     cleaned = String(cleaned[..<dashRange.lowerBound])
                 }
-                // Remove trailing comma and city
+                // Remove trailing comma and city/state (e.g., "childish bakery, tx" -> "childish bakery")
                 if let commaRange = cleaned.range(of: ", ", options: .backwards) {
-                    // Check if what's after comma looks like a city/state
-                    let afterComma = String(cleaned[commaRange.upperBound...]).lowercased()
-                    if afterComma.count < 20 { // Likely a city name
+                    // Check if what's after comma looks like a city/state (short, likely 2-letter state or city name)
+                    let afterComma = String(cleaned[commaRange.upperBound...]).lowercased().trimmingCharacters(in: .whitespaces)
+                    // If it's 2-3 chars, likely a state code (TX, CA, NY, etc.)
+                    // If it's longer but < 20 chars, likely a city name
+                    // Check if it's all lowercase letters/spaces (city name pattern)
+                    let isCityName = afterComma.allSatisfy { $0.isLowercase || $0.isWhitespace }
+                    if afterComma.count <= 20 && (afterComma.count <= 3 || isCityName) {
                         cleaned = String(cleaned[..<commaRange.lowerBound])
                     }
                 }
                 cleaned = cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
-                if cleaned.count >= 2 && cleaned.count <= 60 {
+                
+                // IMPORTANT: Skip if this looks like an address (starts with numbers)
+                // Addresses like "4205 Buena Vista" should not be used as place names
+                if cleaned.prefix(1).allSatisfy({ $0.isNumber }) {
+                    logger.info("extractPlaceNameFromCaption - 📍 pin found address (skipping): \(cleaned)")
+                    continue // Skip addresses, they're location hints, not business names
+                }
+                
+                // Validate: reasonable length and not just common words
+                if cleaned.count >= 2 && cleaned.count <= 60 && !isCommonWord(cleaned) {
                     logger.info("extractPlaceNameFromCaption - found via 📍 pin: \(cleaned)")
                     return cleaned
                 }
@@ -505,21 +677,24 @@ enum ContentEnricher {
         }
         
         // PRIORITY 2: Common patterns for place mentions (case insensitive)
+        // These patterns help catch place names even when there's no 📍 emoji
         let patterns = [
-            // "at [Place Name]" - captures text after "at" or "@"
-            #"(?:^|\s)(?:at|@)\s+([A-Za-z][A-Za-z0-9'&\-\s]{2,40}?)(?:\s+in\s+|\s*[!.,#]|\s*$)"#,
-            // "called [Place Name]"
-            #"called\s+([A-Za-z][A-Za-z0-9'&\-\s]{2,40}?)(?:\s+in\s+|\s*[!.,#]|\s*$)"#,
-            // "to [Place Name]" (as in "went to", "go to")
-            #"(?:went to|going to|go to|visit|check out|tried|trying)\s+([A-Za-z][A-Za-z0-9'&\-\s]{2,40}?)(?:\s+in\s+|\s*[!.,#]|\s*$)"#,
-            // "[Place Name] in [City]" pattern
+            // "at [Place Name]" - captures text after "at" or "@" (e.g., "at childish bakery")
+            #"(?:^|\s)(?:at|@)\s+([A-Za-z][A-Za-z0-9'&\-\s]{2,40}?)(?:\s+in\s+|\s*[-–—]|\s*[!.,#]|\s*$)"#,
+            // "called [Place Name]" (e.g., "a place called childish bakery")
+            #"called\s+([A-Za-z][A-Za-z0-9'&\-\s]{2,40}?)(?:\s+in\s+|\s*[-–—]|\s*[!.,#]|\s*$)"#,
+            // "to [Place Name]" (as in "went to", "go to", "heading to")
+            #"(?:went to|going to|go to|heading to|visit|check out|tried|trying|stopped by|swung by)\s+([A-Za-z][A-Za-z0-9'&\-\s]{2,40}?)(?:\s+in\s+|\s*[-–—]|\s*[!.,#]|\s*$)"#,
+            // "[Place Name] in [City]" pattern (e.g., "childish bakery in carrollton")
             #"([A-Z][A-Za-z0-9'&\-\s]{2,40}?)\s+in\s+[A-Z][a-z]+"#,
-            // Hashtag that might be a place name: #PlaceName or #Place_Name
+            // Hashtag that might be a place name: #PlaceName or #Place_Name (e.g., "#childishbakery")
             #"#([A-Z][A-Za-z0-9_]{2,30})"#,
-            // "the [Place Name]" for places like "the Coffee Shop"
-            #"(?:^|\s)the\s+([A-Z][A-Za-z0-9'&\-\s]{2,40}?)(?:\s+in\s+|\s*[!.,#]|\s*$)"#,
-            // Place name at the start of caption (common in TikTok)
-            #"^([A-Z][A-Za-z0-9'&\-\s]{2,40}?)(?:\s*[-–—:!]|\s+is\s+|\s+has\s+)"#
+            // "the [Place Name]" for places like "the Coffee Shop" or "the Cottage Grocery"
+            #"(?:^|\s)the\s+([A-Z][A-Za-z0-9'&\-\s]{2,40}?)(?:\s+in\s+|\s*[-–—]|\s*[!.,#]|\s*$)"#,
+            // Place name at the start of caption (common in TikTok, e.g., "Childish Bakery - best salt bread!")
+            #"^([A-Z][A-Za-z0-9'&\-\s]{2,40}?)(?:\s*[-–—:!]|\s+is\s+|\s+has\s+|\s+-\s+)"#,
+            // Place name followed by dash and description (e.g., "Childish Bakery - family owned...")
+            #"([A-Z][A-Za-z0-9'&\-\s]{2,40}?)\s*[-–—]\s+[a-z]"#
         ]
         
         for pattern in patterns {
@@ -591,6 +766,98 @@ enum ContentEnricher {
         }
         
         logger.info("extractPlaceNameFromCaption - no place name found")
+        return nil
+    }
+    
+    // MARK: - Business Name Extraction (separate from address/location)
+    
+    /// Extracts business/restaurant names from captions, distinguishing them from addresses
+    private static func extractBusinessName(from caption: String) -> String? {
+        logger.info("extractBusinessName - input: \(caption.prefix(150))")
+        
+        // PRIORITY 1: Look for business names at the start of the caption
+        // Common patterns: "Rose Café offers...", "Childish Bakery - best...", "The Cottage Grocery - family owned..."
+        let startPatterns = [
+            // Business name at start followed by "offers", "has", "is", etc.
+            #"^([A-Z][A-Za-z0-9'&\-\s]{2,50}?)\s+(?:offers|has|is|was|serves|features|provides)"#,
+            // Business name at start followed by dash and description
+            #"^([A-Z][A-Za-z0-9'&\-\s]{2,50}?)\s*[-–—]\s+[a-z]"#,
+            // "The [Business Name]" at start
+            #"^The\s+([A-Z][A-Za-z0-9'&\-\s]{2,50}?)(?:\s+offers|\s+has|\s+is|\s*[-–—]|\s+in\s+)"#,
+        ]
+        
+        for pattern in startPatterns {
+            if let match = firstMatch(in: caption, pattern: pattern) {
+                let cleaned = match.trimmingCharacters(in: .whitespacesAndNewlines)
+                // Validate it's not an address (doesn't start with numbers)
+                if !cleaned.prefix(1).allSatisfy({ $0.isNumber }) && 
+                   cleaned.count >= 3 && 
+                   cleaned.count <= 50 && 
+                   !isCommonWord(cleaned) {
+                    logger.info("extractBusinessName - found at start: \(cleaned)")
+                    return cleaned
+                }
+            }
+        }
+        
+        // PRIORITY 2: Use NLP to find organization names (businesses)
+        if let nlpResult = extractEntitiesUsingNLP(from: caption) {
+            // Filter out addresses (things that start with numbers) from organizations
+            for org in nlpResult.allOrganizations {
+                // Skip if it looks like an address (starts with number)
+                if org.prefix(1).allSatisfy({ $0.isNumber }) {
+                    continue
+                }
+                // Skip common delivery services
+                if ["Uber Eats", "GrubHub", "Favor", "DoorDash", "Postmates"].contains(org) {
+                    continue
+                }
+                // Prefer organization names that appear early in the caption
+                if let range = caption.range(of: org, options: .caseInsensitive) {
+                    let position = caption.distance(from: caption.startIndex, to: range.lowerBound)
+                    // If it's in the first 100 characters, it's likely the main business
+                    if position < 100 {
+                        logger.info("extractBusinessName - found via NLP (early organization): \(org)")
+                        return org
+                    }
+                }
+            }
+            // Fallback to first organization if none found early
+            if let orgName = nlpResult.organizationName,
+               !orgName.prefix(1).allSatisfy({ $0.isNumber }),
+               !["Uber Eats", "GrubHub", "Favor", "DoorDash", "Postmates"].contains(orgName) {
+                logger.info("extractBusinessName - found via NLP (organization): \(orgName)")
+                return orgName
+            }
+        }
+        
+        // PRIORITY 3: Look for capitalized business names in the first part of caption
+        // Split caption into sentences and check first sentence
+        let firstSentence = caption.components(separatedBy: CharacterSet(charactersIn: ".!?")).first ?? caption
+        let words = firstSentence.components(separatedBy: CharacterSet.whitespaces.union(CharacterSet(charactersIn: ",;:")))
+        var consecutiveCapitalized: [String] = []
+        
+        for word in words.prefix(10) { // Only check first 10 words
+            let cleaned = word.trimmingCharacters(in: .punctuationCharacters)
+            if let first = cleaned.first,
+               first.isUppercase &&
+               cleaned.count > 1 &&
+               !cleaned.allSatisfy({ $0.isUppercase }) &&
+               !cleaned.prefix(1).allSatisfy({ $0.isNumber }) { // Not an address
+                consecutiveCapitalized.append(cleaned)
+            } else if !consecutiveCapitalized.isEmpty {
+                if consecutiveCapitalized.count >= 2 {
+                    let potentialName = consecutiveCapitalized.joined(separator: " ")
+                    if !isCommonPhrase(potentialName) && potentialName.count >= 4 {
+                        logger.info("extractBusinessName - found via capitalization: \(potentialName)")
+                        return potentialName
+                    }
+                }
+                consecutiveCapitalized = []
+            }
+        }
+        
+        logger.info("extractBusinessName - no business name found")
         return nil
     }
     
@@ -863,7 +1130,14 @@ enum ContentEnricher {
             
             let places = response.mapItems.prefix(5).map { item -> ResolvedPlace in
                 let address = formatAddress(from: item)
-                let coordinate = item.placemark.coordinate
+                // Use location property (iOS 26+) or fallback to placemark
+                let coordinate: CLLocationCoordinate2D
+                if #available(iOS 26.0, *) {
+                    // In iOS 26+, location is non-optional
+                    coordinate = item.location.coordinate
+                } else {
+                    coordinate = item.placemark.coordinate
+                }
                 
                 return ResolvedPlace(
                     name: item.name ?? query,
@@ -901,7 +1175,14 @@ enum ContentEnricher {
             }
             
             let formattedAddress = formatAddress(from: item)
-            let coordinate = item.placemark.coordinate
+            // Use location property (iOS 26+) or fallback to placemark
+            let coordinate: CLLocationCoordinate2D
+            if #available(iOS 26.0, *) {
+                // In iOS 26+, location is non-optional
+                coordinate = item.location.coordinate
+            } else {
+                coordinate = item.placemark.coordinate
+            }
             
             let place = ResolvedPlace(
                 name: item.name ?? address,
@@ -919,10 +1200,10 @@ enum ContentEnricher {
     
     // MARK: - Helper Functions
     
-    // Note: Using placemark property which is deprecated in iOS 26 but still functional.
-    // The warnings can be ignored - Apple recommends using MKMapItem's location, address
-    // and addressRepresentations properties, but the API is not fully documented yet.
     private static func formatAddress(from mapItem: MKMapItem) -> String {
+        // Note: placemark is deprecated in iOS 26.0, but MKAddress has different structure
+        // We continue using placemark as it's the most reliable way to get address components
+        // TODO: Migrate to MKAddress when its API is better documented
         let placemark = mapItem.placemark
         var components: [String] = []
         
@@ -1027,7 +1308,8 @@ enum ContentEnricher {
             "the", "this", "that", "with", "from", "have", "been",
             "just", "best", "good", "great", "love", "like", "really",
             "amazing", "awesome", "beautiful", "perfect", "delicious",
-            "first", "last", "next", "back", "here", "there"
+            "first", "last", "next", "back", "here", "there",
+            "new", "open", "now", "try", "tried", "going", "went"
         ])
         return commonWords.contains(word.lowercased())
     }

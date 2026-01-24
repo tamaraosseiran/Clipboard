@@ -245,6 +245,36 @@ struct ShareRootView: View {
         self.alternatePlaces = []
     }
     
+    // MARK: - Helper: Extract Title from HTML
+    private func extractTitleFromHTML(_ html: String) -> String? {
+        // Try multiple patterns for title extraction
+        let patterns = [
+            #"<title[^>]*>(.*?)</title>"#,
+            #"<meta[^>]*property=["']og:title["'][^>]*content=["'](.*?)["']"#,
+            #"<meta[^>]*name=["']twitter:title["'][^>]*content=["'](.*?)["']"#,
+            #"<h1[^>]*>(.*?)</h1>"#
+        ]
+        
+        for pattern in patterns {
+            if let match = try? NSRegularExpression(pattern: pattern, options: [.dotMatchesLineSeparators, .caseInsensitive])
+                .firstMatch(in: html, range: NSRange(html.startIndex..., in: html)),
+               match.numberOfRanges > 1,
+               let range = Range(match.range(at: 1), in: html) {
+                let title = String(html[range])
+                    .replacingOccurrences(of: "&amp;", with: "&")
+                    .replacingOccurrences(of: "&lt;", with: "<")
+                    .replacingOccurrences(of: "&gt;", with: ">")
+                    .replacingOccurrences(of: "&quot;", with: "\"")
+                    .replacingOccurrences(of: "&#39;", with: "'")
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                if !title.isEmpty {
+                    return title
+                }
+            }
+        }
+        return nil
+    }
+    
     // MARK: - Parse Content (Enhanced with ContentEnricher)
     private func parseContent() {
         print("🔵 [ShareRootView] parseContent() called")
@@ -294,9 +324,9 @@ struct ShareRootView: View {
         }
         
         // Log all type identifiers for debugging
-        for (index, provider) in attachments.enumerated() {
+        for (idx, provider) in attachments.enumerated() {
             let types = provider.registeredTypeIdentifiers
-            print("📋 [ShareRootView] Attachment \(index + 1) types: \(types.joined(separator: ", "))")
+            print("📋 [ShareRootView] Attachment \(idx + 1) types: \(types.joined(separator: ", "))")
         }
         
         // Try to load ALL content types from ALL attachments
@@ -305,16 +335,17 @@ struct ShareRootView: View {
         let group = DispatchGroup()
         
         // First, check attributedContentText - social media apps often put caption here
+        // Safari also uses this for page descriptions
         if let attributedText = firstItem.attributedContentText?.string, !attributedText.isEmpty {
             print("📝 [ShareRootView] Using attributedContentText as initial text: \(attributedText)")
             foundText = attributedText
         }
         
         // Load from ALL attachments - don't break early
-        for (index, provider) in attachments.enumerated() {
+        for (idx, provider) in attachments.enumerated() {
             // Try URL type
             if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
-                print("🔗 [ShareRootView] Attachment \(index+1) has URL type, loading...")
+                print("🔗 [ShareRootView] Attachment \(idx+1) has URL type, loading...")
                 group.enter()
                 provider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { item, error in
                     defer { group.leave() }
@@ -342,7 +373,7 @@ struct ShareRootView: View {
             
             // Try plain text type
             if provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
-                print("📝 [ShareRootView] Attachment \(index+1) has plain text type, loading...")
+                print("📝 [ShareRootView] Attachment \(idx+1) has plain text type, loading...")
                 group.enter()
                 provider.loadItem(forTypeIdentifier: UTType.plainText.identifier, options: nil) { item, error in
                     defer { group.leave() }
@@ -384,7 +415,7 @@ struct ShareRootView: View {
             // Also try UTType.text as fallback
             if provider.hasItemConformingToTypeIdentifier(UTType.text.identifier) && 
                !provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
-                print("📝 [ShareRootView] Attachment \(index+1) has text type, loading...")
+                print("📝 [ShareRootView] Attachment \(idx+1) has text type, loading...")
                 group.enter()
                 provider.loadItem(forTypeIdentifier: UTType.text.identifier, options: nil) { item, error in
                     defer { group.leave() }
@@ -404,6 +435,39 @@ struct ShareRootView: View {
                     }
                 }
             }
+            
+            // Try HTML type (Safari sometimes provides this)
+            if provider.hasItemConformingToTypeIdentifier(UTType.html.identifier) {
+                print("🌐 [ShareRootView] Attachment \(idx+1) has HTML type, loading...")
+                group.enter()
+                provider.loadItem(forTypeIdentifier: UTType.html.identifier, options: nil) { item, error in
+                    defer { group.leave() }
+                    
+                    if let error = error {
+                        print("❌ [ShareRootView] Error loading HTML: \(error.localizedDescription)")
+                        return
+                    }
+                    
+                    if let htmlString = item as? String {
+                        print("✅ [ShareRootView] Loaded HTML (\(htmlString.count) chars)")
+                        // Extract title and description from HTML
+                        if let title = self.extractTitleFromHTML(htmlString) {
+                            print("✅ [ShareRootView] Extracted title from HTML: \(title)")
+                            if foundText == nil || foundText?.isEmpty == true {
+                                foundText = title
+                            }
+                        }
+                    } else if let data = item as? Data, let htmlString = String(data: data, encoding: .utf8) {
+                        print("✅ [ShareRootView] Loaded HTML from data (\(htmlString.count) chars)")
+                        if let title = self.extractTitleFromHTML(htmlString) {
+                            print("✅ [ShareRootView] Extracted title from HTML: \(title)")
+                            if foundText == nil || foundText?.isEmpty == true {
+                                foundText = title
+                            }
+                        }
+                    }
+                }
+            }
         }
         
         // Wait for async loads to complete
@@ -415,72 +479,161 @@ struct ShareRootView: View {
                 self.sourceURL = url.absoluteString
             }
             
-            // First fetch HTML metadata if we have a URL
-            if let url = foundURL {
-                let candidate = SharedCandidate(
-                    sourceURL: url,
-                    rawText: foundText,
-                    movieFileURL: nil,
-                    imageFileURL: nil
-                )
-                
-                // Fetch HTML metadata first (this also fetches oEmbed for TikTok/Instagram)
-                MetadataFetcher.buildDraft(from: candidate, logger: self.logger) { draft in
-                    // Now use ContentEnricher to enhance the results
-                    var structuredCoords: (lat: Double, lon: Double)? = nil
-                    if let lat = draft.latitude, let lon = draft.longitude {
-                        structuredCoords = (lat, lon)
-                    }
-                    
-                    // Check if we got a caption from oEmbed (TikTok/Instagram)
-                    // The oEmbed caption is stored in MetadataFetcher.lastFetchedCaption
-                    let oembedCaption = MetadataFetcher.lastFetchedCaption
-                    print("📝 [ShareRootView] oEmbed caption: \(oembedCaption ?? "nil")")
-                    
-                    // Use oEmbed caption as text if we don't have other text
-                    let textToEnrich = foundText ?? oembedCaption
-                    
-                    ContentEnricher.enrich(
-                        url: url,
-                        text: textToEnrich,
-                        htmlTitle: draft.name,
-                        htmlDescription: oembedCaption, // Pass oEmbed caption as description too
-                        structuredAddress: draft.address,
-                        structuredCoordinates: structuredCoords
-                    ) { enriched in
+            // Check if we have a video file to process
+            // Note: ShareParser would have set movieFileURL, but we need to check providers here
+            var imageFileURL: URL? = nil
+            
+            // Try to get video/image files from providers
+            var hasVideoFile = false
+            for provider in attachments {
+                if provider.hasItemConformingToTypeIdentifier(UTType.movie.identifier) {
+                    print("🎬 [ShareRootView] Found video file, loading...")
+                    hasVideoFile = true
+                    provider.loadFileRepresentation(forTypeIdentifier: UTType.movie.identifier) { fileURL, error in
                         DispatchQueue.main.async {
-                            self.applyEnrichedContent(enriched)
+                            if let fileURL = fileURL {
+                                print("✅ [ShareRootView] Loaded video file: \(fileURL.lastPathComponent)")
+                                self.processWithVideoContent(url: foundURL, text: foundText, videoURL: fileURL)
+                            } else {
+                                // Video load failed, fall back to normal processing
+                                if foundURL == nil, let text = foundText {
+                                    self.processTextOnly(text: text)
+                                } else {
+                                    self.processContent(url: foundURL, text: foundText, imageURL: nil)
+                                }
+                            }
+                        }
+                    }
+                    return // Process video asynchronously, don't continue with normal flow
+                }
+                
+                if provider.hasItemConformingToTypeIdentifier(UTType.image.identifier) {
+                    print("🖼️ [ShareRootView] Found image file, loading...")
+                    provider.loadFileRepresentation(forTypeIdentifier: UTType.image.identifier) { fileURL, error in
+                        if let fileURL = fileURL {
+                            print("✅ [ShareRootView] Loaded image file: \(fileURL.lastPathComponent)")
+                            imageFileURL = fileURL
                         }
                     }
                 }
-            } else if let text = foundText {
-                // No URL, just text - use ContentEnricher directly
-                ContentEnricher.enrich(
-                    url: nil,
-                    text: text,
-                    htmlTitle: nil,
-                    htmlDescription: nil,
-                    structuredAddress: nil,
-                    structuredCoordinates: nil
-                ) { enriched in
-                    DispatchQueue.main.async {
-                        self.applyEnrichedContent(enriched)
-                    }
+            }
+            
+            // If no video file, process normally
+            if !hasVideoFile {
+                // Handle text-only case
+                if foundURL == nil, let text = foundText {
+                    self.processTextOnly(text: text)
+                } else {
+                    self.processContent(url: foundURL, text: foundText, imageURL: imageFileURL)
                 }
+            }
+        }
+    }
+    
+    private func processContent(url: URL?, text: String?, imageURL: URL?) {
+        // Handle text-only case (no URL)
+        guard let url = url else {
+            if let text = text {
+                processTextOnly(text: text)
             } else {
-                // No content found
-                self.isLoading = false
-                self.hasContent = true
-                print("⚠️ [ShareRootView] No URL or text found - showing empty form")
+                print("⚠️ [ShareRootView] No URL or text to process")
+            }
+            return
+        }
+        
+        let candidate = SharedCandidate(
+            sourceURL: url,
+            rawText: text,
+            movieFileURL: nil,
+            imageFileURL: imageURL
+        )
+        
+        // Fetch HTML metadata first (this also fetches oEmbed for TikTok/Instagram)
+        MetadataFetcher.buildDraft(from: candidate, logger: self.logger) { draft in
+            // Now use ContentEnricher to enhance the results
+            var structuredCoords: (lat: Double, lon: Double)? = nil
+            if let lat = draft.latitude, let lon = draft.longitude {
+                structuredCoords = (lat, lon)
+            }
+            
+            // Check if we got a caption from oEmbed (TikTok/Instagram)
+            // The oEmbed caption is stored in MetadataFetcher.lastFetchedCaption
+            let oembedCaption = MetadataFetcher.lastFetchedCaption
+            print("📝 [ShareRootView] oEmbed caption: \(oembedCaption ?? "nil")")
+            
+            // Use oEmbed caption as text if we don't have other text
+            let textToEnrich = text ?? oembedCaption
+            
+            ContentEnricher.enrich(
+                url: url,
+                text: textToEnrich,
+                htmlTitle: draft.name,
+                htmlDescription: oembedCaption, // Pass oEmbed caption as description too
+                structuredAddress: draft.address,
+                structuredCoordinates: structuredCoords
+            ) { enriched in
+                DispatchQueue.main.async {
+                    self.applyEnrichedContent(enriched)
+                }
+            }
+        }
+    }
+    
+    private func processWithVideoContent(url: URL?, text: String?, videoURL: URL) {
+        print("🎬 [ShareRootView] Processing video content extraction...")
+        print("   Video URL: \(videoURL.path)")
+        print("   File exists: \(FileManager.default.fileExists(atPath: videoURL.path))")
+        print("   File size: \(try? FileManager.default.attributesOfItem(atPath: videoURL.path)[.size] ?? 0) bytes")
+        print("   Initial text: \(text?.prefix(100) ?? "nil")")
+        
+        // Ensure file is accessible (start accessing security-scoped resource if needed)
+        let accessing = videoURL.startAccessingSecurityScopedResource()
+        if accessing {
+            print("   ✅ Started accessing security-scoped resource")
+        }
+        defer {
+            if accessing {
+                videoURL.stopAccessingSecurityScopedResource()
+                print("   ✅ Stopped accessing security-scoped resource")
             }
         }
         
-        // Timeout after 5 seconds - always show form (increased from 3s for enrichment)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
-            if self.isLoading {
-                print("⏱️ [ShareRootView] Parse timeout - showing form anyway")
-                self.isLoading = false
-                self.hasContent = true
+        // Extract text from video (OCR + transcription)
+        VideoContentExtractor.extract(from: videoURL) { extracted in
+            print("✅ [ShareRootView] Video extraction complete")
+            print("   OCR text segments: \(extracted.onScreenText.count)")
+            if !extracted.onScreenText.isEmpty {
+                print("   OCR samples: \(extracted.onScreenText.prefix(3).joined(separator: " | "))")
+            }
+            print("   Transcription: \(extracted.transcribedText?.prefix(100) ?? "nil")")
+            print("   Combined allText: \(extracted.allText.prefix(200))")
+            
+            // Combine all text sources: caption, OCR, transcription
+            var allText = text ?? ""
+            if !extracted.allText.isEmpty {
+                allText += (allText.isEmpty ? "" : " ") + extracted.allText
+            }
+            
+            print("   Final combined text length: \(allText.count) characters")
+            print("   Final combined text preview: \(allText.prefix(200))")
+            
+            // Now process with combined text
+            self.processContent(url: url, text: allText.isEmpty ? nil : allText, imageURL: nil)
+        }
+    }
+    
+    private func processTextOnly(text: String) {
+        // No URL, just text - use ContentEnricher directly
+        ContentEnricher.enrich(
+            url: nil,
+            text: text,
+            htmlTitle: nil,
+            htmlDescription: nil,
+            structuredAddress: nil,
+            structuredCoordinates: nil
+        ) { enriched in
+            DispatchQueue.main.async {
+                self.applyEnrichedContent(enriched)
             }
         }
     }
